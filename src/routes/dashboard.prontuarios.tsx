@@ -38,7 +38,7 @@ function Records() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const r = recordSchema.safeParse(form);
-    if (!r.success) return toast.error(r.error.issues[0].message);
+    if (!r.success) { toast.error(r.error.issues[0]?.message ?? 'Dados inválidos'); return; }
     await recordsRepo.create(tenantId, r.data);
     toast.success("Evolução registrada");
     setOpen(false);

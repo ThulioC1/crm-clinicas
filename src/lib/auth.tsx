@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const uid = sessionStorage.getItem(DEMO_KEY);
     setUser(uid ? usersRepo.getMock(uid) ?? null : null);
     setLoading(false);
+    return undefined;
   }, []);
 
   const guard = (p: UserProfile) => {

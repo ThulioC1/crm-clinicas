@@ -51,7 +51,7 @@ function Clients() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const r = patientSchema.safeParse(form);
-    if (!r.success) return toast.error(r.error.issues[0].message);
+    if (!r.success) { toast.error(r.error.issues[0]?.message ?? 'Dados inválidos'); return; }
     await patientsRepo.create(tenantId, { ...r.data, notes: r.data.notes ?? "" });
     toast.success("Paciente cadastrado");
     setForm(empty);

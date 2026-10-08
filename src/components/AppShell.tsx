@@ -24,7 +24,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
             <Link
               key={n.to}
               to={n.to}
-              activeOptions={{ exact: n.exact }}
+              activeOptions={{ exact: n.exact ?? false }}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-semibold" }}
             >
@@ -50,7 +50,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b bg-card px-2 py-2 md:hidden">
           {nav.map((n) => (
-            <Link key={n.to} to={n.to} activeOptions={{ exact: n.exact }} className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm" activeProps={{ className: "bg-secondary font-semibold" }}>{n.label}</Link>
+            <Link key={n.to} to={n.to} activeOptions={{ exact: n.exact ?? false }} className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm" activeProps={{ className: "bg-secondary font-semibold" }}>{n.label}</Link>
           ))}
         </nav>
         {!isFirebaseConfigured && (
