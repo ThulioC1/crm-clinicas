@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// Regras multi-tenant: cada profissional só acessa documentos com tenantId == seu tenant.
+// Super admins têm acesso global de leitura e gestão de perfis.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isSuperAdmin() { return signedIn() && me().role == 'super_admin'; }
+    function isActive() { return signedIn() && me().status == 'active'; }
+    function myTenant() { return me().tenantId; }
+
+    // Leitura/alteração de documento existente do próprio tenant
+    function ownsResource() { return isActive() && resource.data.tenantId == myTenant(); }
+    // Criação: o documento novo precisa carregar o tenant do usuário
+    function createsInOwnTenant() { return isActive() && request.resource.data.tenantId == myTenant(); }
+    // Atualização não pode trocar o tenantId
+    function keepsTenant() { return request.resource.data.tenantId == resource.data.tenantId; }
+
+    match /users/{uid} {
+      allow read: if (signedIn() && request.auth.uid == uid) || isSuperAdmin();
+      // Usuário cria o próprio perfil apenas como 'professional', com tenantId = uid
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'professional'
+        && request.resource.data.tenantId == uid
+        && request.resource.data.status == 'active';
+      // Usuário comum não pode alterar role, status, plano ou tenant
+      allow update: if isSuperAdmin() || (signedIn() && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'status', 'plan', 'tenantId']));
+      allow delete: if isSuperAdmin();
+    }
+
+    match /patients/{id} {
+      allow read, delete: if ownsResource();
+      allow create: if createsInOwnTenant();
+      allow update: if ownsResource() && keepsTenant();
+    }
+
+    match /appointments/{id} {
+      allow read, delete: if ownsResource();
+      allow create: if createsInOwnTenant();
+      allow update: if ownsResource() && keepsTenant();
+    }
+
+    match /medical_records/{id} {
+      allow read, delete: if ownsResource();
+      allow create: if createsInOwnTenant();
+      allow update: if ownsResource() && keepsTenant();
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
