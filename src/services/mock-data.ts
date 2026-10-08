@@ -21,7 +21,7 @@ export const mockPatients: Patient[] = names.map((name, i) => ({
   id: `pat-${i + 1}`,
   tenantId: i < 9 ? "pro-1" : "pro-2",
   name,
-  email: `${name.split(" ")[0].toLowerCase()}@email.com`,
+  email: `${(name.split(" ")[0] ?? "").toLowerCase()}@email.com`,
   phone: `(85) 9${8000 + i * 37}-${1000 + i * 91}`,
   birthDate: `19${80 + i}-0${(i % 9) + 1}-1${i % 9}`,
   notes: i % 3 === 0 ? "Restrição a lactose." : "",
@@ -36,7 +36,7 @@ export const mockAppointments: Appointment[] = Array.from({ length: 14 }, (_, i)
   date: d((i % 7) - 1),
   time: `${String(8 + (i % 9)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`,
   duration: i % 3 === 0 ? 60 : 45,
-  type: types[i % 4],
+  type: types[i % 4] ?? "Consulta",
   createdAt: d(-5),
 }));
 

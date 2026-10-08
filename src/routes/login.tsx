@@ -39,7 +39,7 @@ function LoginPage() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = loginSchema.safeParse({ email, password });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? 'Dados inválidos'); return; }
     run(() => loginEmail(parsed.data.email, parsed.data.password));
   };
 

@@ -40,7 +40,7 @@ function Agenda() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const r = appointmentSchema.safeParse(form);
-    if (!r.success) return toast.error(r.error.issues[0].message);
+    if (!r.success) { toast.error(r.error.issues[0]?.message ?? 'Dados inválidos'); return; }
     if (appts.some((a) => a.date === r.data.date && a.time === r.data.time)) return toast.error("Horário já ocupado");
     await appointmentsRepo.create(tenantId, r.data);
     toast.success("Consulta agendada");
