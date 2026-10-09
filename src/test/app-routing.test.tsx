@@ -14,4 +14,22 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("resolve /dashboard/clientes na listagem", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/dashboard/clientes");
+
+    expect(matches.at(-1)?.routeId).toBe("/dashboard/clientes/");
+  });
+
+  it("resolve /dashboard/clientes/:id na ficha, não no layout", () => {
+    // Regressão: quando /dashboard/clientes era layout sem <Outlet />, o clique na
+    // tabela não navigava — a rota filha casava mas nunca era renderizada.
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/dashboard/clientes/abc123");
+
+    expect(matches.at(-1)?.routeId).toBe("/dashboard/clientes/$patientId");
+  });
 });

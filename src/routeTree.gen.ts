@@ -21,6 +21,7 @@ import { Route as DashboardClientesRouteImport } from './routes/dashboard.client
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
 import { Route as DashboardProntuariosRouteImport } from './routes/dashboard.prontuarios'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth.google.callback'
+import { Route as DashboardClientesIndexRouteImport } from './routes/dashboard.clientes.index'
 import { Route as DashboardClientesPatientIdRouteImport } from './routes/dashboard.clientes.$patientId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -83,6 +84,11 @@ const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
   path: '/auth/google/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardClientesIndexRoute = DashboardClientesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardClientesRoute,
+} as any)
 const DashboardClientesPatientIdRoute =
   DashboardClientesPatientIdRouteImport.update({
     id: '/$patientId',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/dashboard/clientes/$patientId': typeof DashboardClientesPatientIdRoute
+  '/dashboard/clientes/': typeof DashboardClientesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,12 +119,12 @@ export interface FileRoutesByTo {
   '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
   '/dashboard/avaliacao': typeof DashboardAvaliacaoRoute
-  '/dashboard/clientes': typeof DashboardClientesRouteWithChildren
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
   '/dashboard': typeof DashboardIndexRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/dashboard/clientes/$patientId': typeof DashboardClientesPatientIdRoute
+  '/dashboard/clientes': typeof DashboardClientesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +141,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/dashboard/clientes/$patientId': typeof DashboardClientesPatientIdRoute
+  '/dashboard/clientes/': typeof DashboardClientesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +159,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/auth/google/callback'
     | '/dashboard/clientes/$patientId'
+    | '/dashboard/clientes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -159,12 +168,12 @@ export interface FileRouteTypes {
     | '/trocar-senha'
     | '/dashboard/agenda'
     | '/dashboard/avaliacao'
-    | '/dashboard/clientes'
     | '/dashboard/configuracoes'
     | '/dashboard/prontuarios'
     | '/dashboard'
     | '/auth/google/callback'
     | '/dashboard/clientes/$patientId'
+    | '/dashboard/clientes'
   id:
     | '__root__'
     | '/'
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/auth/google/callback'
     | '/dashboard/clientes/$patientId'
+    | '/dashboard/clientes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -277,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthGoogleCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/clientes/': {
+      id: '/dashboard/clientes/'
+      path: '/'
+      fullPath: '/dashboard/clientes/'
+      preLoaderRoute: typeof DashboardClientesIndexRouteImport
+      parentRoute: typeof DashboardClientesRoute
+    }
     '/dashboard/clientes/$patientId': {
       id: '/dashboard/clientes/$patientId'
       path: '/$patientId'
@@ -289,10 +306,12 @@ declare module '@tanstack/react-router' {
 
 interface DashboardClientesRouteChildren {
   DashboardClientesPatientIdRoute: typeof DashboardClientesPatientIdRoute
+  DashboardClientesIndexRoute: typeof DashboardClientesIndexRoute
 }
 
 const DashboardClientesRouteChildren: DashboardClientesRouteChildren = {
   DashboardClientesPatientIdRoute: DashboardClientesPatientIdRoute,
+  DashboardClientesIndexRoute: DashboardClientesIndexRoute,
 }
 
 const DashboardClientesRouteWithChildren =
