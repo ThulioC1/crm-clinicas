@@ -9,9 +9,11 @@ import {
   Shield,
   CheckCircle,
   AlertCircle,
+  Stethoscope,
 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth";
@@ -24,6 +26,24 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SPECIALTY_OPTIONS, resolveSpecialty, modulesFor, type ModuleId } from "@/lib/specialties";
+
+const MODULE_LABELS: Record<ModuleId, string> = {
+  avaliacao_nutricional: "Avaliação nutricional",
+  eav: "Escala de avaliação",
+  psicometria: "Psicometria",
+  carga_1rm: "Carga máxima",
+  cid10: "CID-10",
+  prontuario: "Prontuário",
+};
 
 export const Route = createFileRoute("/dashboard/configuracoes")({
   head: () => ({
@@ -46,6 +66,15 @@ function Configuracoes() {
   const [connecting, setConnecting] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const hasGoogle = !!me.googleRefreshToken;
+
+  const handleSpecialtyChange = async (value: string) => {
+    try {
+      await usersRepo.update(me, me.id, { specialty: value });
+      toast.success("Especialidade atualizada");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const handleConnect = () => {
     if (!GOOGLE_CLIENT_ID) {
@@ -77,6 +106,47 @@ function Configuracoes() {
     <>
       <PageHeader title="Configurações" subtitle="Integrações e preferências da sua conta" />
       <div className="grid gap-6 max-w-3xl">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100 text-teal-600">
+                <Stethoscope className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>Especialidade</CardTitle>
+                <CardDescription>Define as ferramentas disponíveis no seu painel</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <Label>Área de atuação</Label>
+              <Select
+                value={resolveSpecialty(me.specialty).id}
+                onValueChange={handleSpecialtyChange}
+              >
+                <SelectTrigger className="max-w-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPECIALTY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {modulesFor(me.specialty).map((m) => (
+                <Badge key={m} variant="secondary">
+                  {MODULE_LABELS[m]}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">

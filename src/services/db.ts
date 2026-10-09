@@ -24,6 +24,15 @@ const byCreatedAtDesc = (a: TenantEntity, b: TenantEntity) =>
 
 const warnedCollections = new Set<string>();
 
+/**
+ * O Firestore rejeita `undefined` ("Unsupported field value: undefined").
+ * Campo opcional não preenchido precisa ser omitido do documento, não enviado
+ * como undefined — daí este filtro antes de qualquer escrita.
+ */
+export function semIndefinidos<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
 function isMissingIndexError(error: unknown): boolean {
   const code = (error as { code?: string } | null)?.code ?? "";
   return code === "failed-precondition" || code === "unimplemented";
@@ -86,7 +95,7 @@ function createTenantRepo<T extends TenantEntity>(name: string, seed: T[]) {
 
     async create(tenantId: string, data: Omit<T, "id" | "tenantId" | "createdAt">): Promise<void> {
       assertTenant(tenantId);
-      const payload = { ...data, tenantId, createdAt: new Date().toISOString() };
+      const payload = semIndefinidos({ ...data, tenantId, createdAt: new Date().toISOString() });
       if (isFirebaseConfigured && db) await addDoc(collection(db, name), payload);
       else store = [{ ...(payload as unknown as T), id: crypto.randomUUID() }, ...store];
       emit();
@@ -94,10 +103,11 @@ function createTenantRepo<T extends TenantEntity>(name: string, seed: T[]) {
 
     async update(tenantId: string, id: string, data: Partial<Omit<T, "id" | "tenantId">>) {
       assertTenant(tenantId);
+      const patch = semIndefinidos(data);
       if (isFirebaseConfigured && db)
-        await updateDoc(doc(db, name, id), data as Record<string, unknown>);
+        await updateDoc(doc(db, name, id), patch as Record<string, unknown>);
       else
-        store = store.map((x) => (x.id === id && x.tenantId === tenantId ? { ...x, ...data } : x));
+        store = store.map((x) => (x.id === id && x.tenantId === tenantId ? { ...x, ...patch } : x));
       emit();
     },
 
@@ -134,7 +144,7 @@ export const usersRepo = {
   },
   async create(caller: UserProfile, data: Omit<UserProfile, "id" | "createdAt">): Promise<string> {
     if (caller.role !== "super_admin") throw new Error("Acesso negado");
-    const payload = { ...data, createdAt: new Date().toISOString() };
+    const payload = semIndefinidos({ ...data, createdAt: new Date().toISOString() });
     let newId: string;
     if (isFirebaseConfigured && db) {
       const ref = doc(collection(db, "users"));
@@ -150,11 +160,19 @@ export const usersRepo = {
   async update(
     caller: UserProfile,
     id: string,
-    data: Partial<Pick<UserProfile, "status" | "plan" | "googleRefreshToken" | "googleCalendarId">>,
+    data: Partial<
+      Pick<UserProfile, "status" | "plan" | "specialty" | "googleRefreshToken" | "googleCalendarId">
+    >,
   ) {
-    if (caller.role !== "super_admin") throw new Error("Acesso negado");
-    if (isFirebaseConfigured && db) await updateDoc(doc(db, "users", id), data);
-    else users = users.map((u) => (u.id === id ? { ...u, ...data } : u));
+    // Admin gerencia qualquer perfil; o profissional só ajusta a própria especialidade.
+    const proprio = caller.id === id;
+    const soEspecialidade = Object.keys(data).every((k) => k === "specialty");
+    if (caller.role !== "super_admin" && !(proprio && soEspecialidade)) {
+      throw new Error("Acesso negado");
+    }
+    const patch = semIndefinidos(data);
+    if (isFirebaseConfigured && db) await updateDoc(doc(db, "users", id), patch);
+    else users = users.map((u) => (u.id === id ? { ...u, ...patch } : u));
     userListeners.forEach((l) => l());
   },
   async remove(caller: UserProfile, id: string) {

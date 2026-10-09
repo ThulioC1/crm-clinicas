@@ -28,8 +28,6 @@ import {
 import { usePatients, useRecords, useAppointments, useTenantId } from "@/hooks/use-tenant";
 import { patientsRepo } from "@/services/db";
 import { patientSchema } from "@/lib/schemas";
-import { useAuth } from "@/lib/auth";
-import { resolveSpecialty } from "@/lib/specialties";
 import { ACTIVITY_FACTORS } from "@/lib/calculations/nutrition";
 import type { ActivityLevel, Gender, Patient, WeightGoal } from "@/lib/types";
 
@@ -82,9 +80,6 @@ const fromPatient = (p: Patient) => ({
 
 function Clients() {
   const tenantId = useTenantId();
-  const { user } = useAuth();
-  const specialty = resolveSpecialty(user?.specialty);
-  const usaComposicao = specialty.modules.includes("avaliacao_nutricional");
   const { data } = usePatients();
   const { data: records } = useRecords();
   const { data: appts } = useAppointments();
@@ -246,105 +241,100 @@ function Clients() {
               <Textarea value={form.notes} onChange={set("notes")} />
             </div>
 
-            {usaComposicao && (
-              <>
-                <Separator className="my-2" />
-                <p className="text-sm font-semibold text-muted-foreground">
-                  Dados de composição corporal
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Sexo biológico</Label>
-                    <Select
-                      value={form.gender ?? ""}
-                      onValueChange={(v) => setForm({ ...form, gender: v as Gender })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="female">Feminino</SelectItem>
-                        <SelectItem value="male">Masculino</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Altura (cm)</Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={form.heightCm}
-                      onChange={set("heightCm")}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Peso (kg)</Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={form.weightKg}
-                      onChange={set("weightKg")}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Cintura (cm)</Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={form.waistCm}
-                      onChange={set("waistCm")}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Quadril (cm)</Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={form.hipCm}
-                      onChange={set("hipCm")}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Atividade física</Label>
-                    <Select
-                      value={form.activityLevel ?? ""}
-                      onValueChange={(v) => setForm({ ...form, activityLevel: v as ActivityLevel })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(ACTIVITY_FACTORS).map(([value, info]) => (
-                          <SelectItem key={value} value={value}>
-                            {info.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label>Objetivo</Label>
-                  <Select
-                    value={form.goal ?? ""}
-                    onValueChange={(v) => setForm({ ...form, goal: v as WeightGoal })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lose">Emagrecer</SelectItem>
-                      <SelectItem value="maintain">Manter</SelectItem>
-                      <SelectItem value="gain">Ganhar massa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
+            <Separator className="my-2" />
+            <Separator className="my-2" />
+            <p className="text-sm font-semibold text-muted-foreground">Dados do paciente</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Sexo biológico</Label>
+                <Select
+                  value={form.gender ?? ""}
+                  onValueChange={(v) => setForm({ ...form, gender: v as Gender })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="female">Feminino</SelectItem>
+                    <SelectItem value="male">Masculino</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Altura (cm)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.heightCm}
+                  onChange={set("heightCm")}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Peso (kg)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.weightKg}
+                  onChange={set("weightKg")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Cintura (cm)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.waistCm}
+                  onChange={set("waistCm")}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Quadril (cm)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.hipCm}
+                  onChange={set("hipCm")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Atividade física</Label>
+                <Select
+                  value={form.activityLevel ?? ""}
+                  onValueChange={(v) => setForm({ ...form, activityLevel: v as ActivityLevel })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ACTIVITY_FACTORS).map(([value, info]) => (
+                      <SelectItem key={value} value={value}>
+                        {info.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Objetivo</Label>
+              <Select
+                value={form.goal ?? ""}
+                onValueChange={(v) => setForm({ ...form, goal: v as WeightGoal })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lose">Emagrecer</SelectItem>
+                  <SelectItem value="maintain">Manter</SelectItem>
+                  <SelectItem value="gain">Ganhar massa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button className="w-full">{editing ? "Salvar alterações" : "Salvar"}</Button>
           </form>
         </DialogContent>
@@ -391,13 +381,12 @@ function Clients() {
                     </p>
                   </>
                 )}
-                {usaComposicao &&
-                  (!selected.gender || !selected.heightCm || !selected.weightKg) && (
-                    <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
-                      Faltam dados para o cálculo nutricional. Use <strong>Editar</strong> para
-                      preencher sexo, altura e peso.
-                    </p>
-                  )}
+                {!selected.gender || !selected.heightCm || !selected.weightKg ? (
+                  <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+                    Faltam sexo, altura ou peso. Use <strong>Editar</strong> para preencher —
+                    necessário para o cálculo de IEM e IMC.
+                  </p>
+                ) : null}
                 {selected.notes && (
                   <p>
                     <span className="text-muted-foreground">Observações:</span> {selected.notes}
