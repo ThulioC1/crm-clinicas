@@ -269,19 +269,43 @@
     background: #fff !important;
   }
 
-  /* Fora do impressão some tudo, menos o documento */
-  body * {
+  /* A ocultacao so vale quando ha um documento aberto: o atributo
+     data-printing e colocado no <html> pelo dialogo do documento. Sem ele,
+     imprimir a ficha do paciente sairia uma pagina em branco. */
+  html[data-printing] body * {
     visibility: hidden;
   }
 
-  .doc,
-  .doc * {
+  html[data-printing] .doc,
+  html[data-printing] .doc * {
     visibility: visible;
   }
 
+  /* O .doc mora dentro de um Dialog (portal no body). Na impressao o dialogo
+     perde posicao, transformacao, altura e rolagem, para o documento sair
+     paginado de verdade. */
+  html[data-printing] [role="dialog"] {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  html[data-printing] [data-slot="dialog-overlay"],
+  html[data-printing] [data-slot="dialog-close"] {
+    display: none !important;
+  }
+
   .doc {
-    position: absolute;
-    inset: 0 auto auto 0;
     width: 100%;
     max-width: none;
     margin: 0;
@@ -366,12 +390,6 @@
 
 /* Na impressão os campos somem e resta o texto preenchido */
 @media print {
-  .doc-scroll {
-    max-height: none;
-    overflow: visible;
-    padding-right: 0;
-  }
-
   .doc-table-scroll {
     overflow: visible;
   }

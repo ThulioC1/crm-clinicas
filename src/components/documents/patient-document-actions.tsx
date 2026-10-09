@@ -95,6 +95,22 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
     };
   }, [patient]);
 
+  /**
+   * Marca o <html> enquanto há documento aberto.
+   *
+   * As regras de impressão escondem a aplicação só quando este atributo está
+   * presente — senão um Ctrl+P comum na ficha sairia em branco.
+   */
+  useEffect(() => {
+    const html = document.documentElement;
+    if (kind) {
+      html.setAttribute("data-printing", "true");
+    } else {
+      html.removeAttribute("data-printing");
+    }
+    return () => html.removeAttribute("data-printing");
+  }, [kind]);
+
   /** Carrega o que já foi salvo para este paciente. */
   useEffect(() => {
     if (!kind || kind === "prontuario") return;
