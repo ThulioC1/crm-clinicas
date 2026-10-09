@@ -9,6 +9,7 @@ import {
   updateDoc,
   where,
   orderBy,
+  type QuerySnapshot,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import type { Appointment, MedicalRecord, Patient, UserProfile } from "@/lib/types";
@@ -16,6 +17,28 @@ import { mockAppointments, mockPatients, mockRecords, mockUsers } from "./mock-d
 
 type TenantEntity = { id: string; tenantId: string; createdAt: string };
 type Listener = () => void;
+
+/** `createdAt` é string ISO, então a ordenação textual já equivale à cronológica. */
+const byCreatedAtDesc = (a: TenantEntity, b: TenantEntity) =>
+  b.createdAt.localeCompare(a.createdAt);
+
+const warnedCollections = new Set<string>();
+
+function isMissingIndexError(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code ?? "";
+  return code === "failed-precondition" || code === "unimplemented";
+}
+
+/** Avisa uma única vez por coleção, para não inundar o console a cada render. */
+function warnMissingIndex(name: string): void {
+  if (warnedCollections.has(name)) return;
+  warnedCollections.add(name);
+  console.warn(
+    `[saudepro] Falta o índice composto de "${name}" (tenantId + createdAt). ` +
+      `Rodando sem ele: os dados aparecem ordenados no cliente. ` +
+      `Para corrigir: firebase deploy --only firestore:indexes`,
+  );
+}
 
 /**
  * Repositório multi-tenant. TODA leitura exige tenantId e filtra por ele.
@@ -41,13 +64,22 @@ function createTenantRepo<T extends TenantEntity>(name: string, seed: T[]) {
     async list(tenantId: string): Promise<T[]> {
       assertTenant(tenantId);
       if (isFirebaseConfigured && db) {
-        const q = query(
-          collection(db, name),
-          where("tenantId", "==", tenantId),
-          orderBy("createdAt", "desc"),
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map((s) => ({ id: s.id, ...s.data() }) as T);
+        const col = collection(db, name);
+        const map = (snap: QuerySnapshot) => snap.docs.map((s) => ({ id: s.id, ...s.data() }) as T);
+        try {
+          const snap = await getDocs(
+            query(col, where("tenantId", "==", tenantId), orderBy("createdAt", "desc")),
+          );
+          return map(snap);
+        } catch (e) {
+          // Índice composto (tenantId + createdAt) ainda não publicado.
+          // Cai para a consulta só por tenant e ordena no cliente, para o app
+          // continuar funcionando antes do deploy do índice.
+          if (!isMissingIndexError(e)) throw e;
+          warnMissingIndex(name);
+          const snap = await getDocs(query(col, where("tenantId", "==", tenantId)));
+          return map(snap).sort(byCreatedAtDesc);
+        }
       }
       return store.filter((x) => x.tenantId === tenantId);
     },
