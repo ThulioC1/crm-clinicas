@@ -128,6 +128,12 @@ export const usersRepo = {
     else users = users.map((u) => (u.id === id ? { ...u, ...data } : u));
     userListeners.forEach((l) => l());
   },
+  async remove(caller: UserProfile, id: string) {
+    if (caller.role !== "super_admin") throw new Error("Acesso negado");
+    if (isFirebaseConfigured && db) await deleteDoc(doc(db, "users", id));
+    else users = users.filter((u) => u.id !== id);
+    userListeners.forEach((l) => l());
+  },
   findMock(email: string) {
     return users.find((u) => u.email === email);
   },

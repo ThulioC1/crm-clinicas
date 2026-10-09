@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LayoutDashboard, Plus, UserPlus } from "lucide-react";
+import { LayoutDashboard, Plus, UserPlus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -82,6 +82,18 @@ function AdminPage() {
     try {
       await usersRepo.update(me, id, patch);
       toast.success("Profissional atualizado");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await usersRepo.remove(me, id);
+      toast.success("Profissional excluído");
+      setDeleteId(null);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -231,6 +243,7 @@ function AdminPage() {
               <TableHead>Plano</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ativo</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -263,11 +276,39 @@ function AdminPage() {
                     onCheckedChange={(c) => update(p.id, { status: c ? "active" : "blocked" })}
                   />
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => setDeleteId(p.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir profissional</DialogTitle>
+          </DialogHeader>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Tem certeza? Esta ação não pode ser desfeita.
+          </p>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={() => handleDelete(deleteId!)}>
+              Excluir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
