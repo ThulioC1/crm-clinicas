@@ -61,6 +61,25 @@ const empty = {
   goal: "" as "" | WeightGoal,
 };
 
+const vazioPara = (v: string | number | undefined) =>
+  v === "" || v === undefined ? "" : String(v);
+
+/** Monta o estado do formulário a partir de um paciente existente. */
+const fromPatient = (p: Patient) => ({
+  name: p.name,
+  email: p.email,
+  phone: p.phone,
+  birthDate: p.birthDate,
+  notes: p.notes,
+  gender: p.gender ?? ("" as const),
+  heightCm: vazioPara(p.heightCm),
+  weightKg: vazioPara(p.weightKg),
+  waistCm: vazioPara(p.waistCm),
+  hipCm: vazioPara(p.hipCm),
+  activityLevel: p.activityLevel ?? ("" as const),
+  goal: p.goal ?? ("" as const),
+});
+
 function Clients() {
   const tenantId = useTenantId();
   const { user } = useAuth();
@@ -73,6 +92,7 @@ function Clients() {
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
+  const [editing, setEditing] = useState<Patient | null>(null);
   const [selected, setSelected] = useState<Patient | null>(null);
 
   const filtered = useMemo(
@@ -89,13 +109,37 @@ function Clients() {
     e.preventDefault();
     const r = patientSchema.safeParse(form);
     if (!r.success) {
-      toast.error(r.error.issues[0]?.message ?? "Dados inválidos");
+      // Mostra todos os problemas, não só o primeiro
+      toast.error(r.error.issues.map((i) => i.message).join(" · "));
       return;
     }
-    await patientsRepo.create(tenantId, { ...r.data, notes: r.data.notes ?? "" });
-    toast.success("Paciente cadastrado");
+    try {
+      if (editing) {
+        await patientsRepo.update(tenantId, editing.id, r.data);
+        toast.success("Paciente atualizado");
+      } else {
+        await patientsRepo.create(tenantId, { ...r.data, notes: r.data.notes ?? "" });
+        toast.success("Paciente cadastrado");
+      }
+      setForm(empty);
+      setEditing(null);
+      setOpen(false);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const openNew = () => {
+    setEditing(null);
     setForm(empty);
-    setOpen(false);
+    setOpen(true);
+  };
+
+  const openEdit = (p: Patient) => {
+    setEditing(p);
+    setForm(fromPatient(p));
+    setSelected(null);
+    setOpen(true);
   };
 
   const set =
@@ -108,7 +152,7 @@ function Clients() {
         title="Clientes"
         subtitle={`${data.length} cadastrados`}
         action={
-          <Button onClick={() => setOpen(true)}>
+          <Button onClick={openNew}>
             <Plus className="h-4 w-4" /> Novo cliente
           </Button>
         }
@@ -176,7 +220,7 @@ function Clients() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo cliente</DialogTitle>
+            <DialogTitle>{editing ? "Editar cliente" : "Novo cliente"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={save} className="space-y-3">
             <div className="space-y-1">
@@ -301,7 +345,7 @@ function Clients() {
                 </div>
               </>
             )}
-            <Button className="w-full">Salvar</Button>
+            <Button className="w-full">{editing ? "Salvar alterações" : "Salvar"}</Button>
           </form>
         </DialogContent>
       </Dialog>
@@ -310,8 +354,11 @@ function Clients() {
         <SheetContent className="overflow-y-auto">
           {selected && (
             <>
-              <SheetHeader>
+              <SheetHeader className="flex-row items-center justify-between space-y-0 pr-12">
                 <SheetTitle>{selected.name}</SheetTitle>
+                <Button variant="outline" size="sm" onClick={() => openEdit(selected)}>
+                  Editar
+                </Button>
               </SheetHeader>
               <div className="space-y-2 px-4 text-sm">
                 <p>
@@ -324,6 +371,33 @@ function Clients() {
                   <span className="text-muted-foreground">Nascimento:</span>{" "}
                   {selected.birthDate.split("-").reverse().join("/")}
                 </p>
+                {(selected.gender || selected.heightCm || selected.weightKg) && (
+                  <>
+                    <p>
+                      <span className="text-muted-foreground">Sexo:</span>{" "}
+                      {selected.gender === "female"
+                        ? "Feminino"
+                        : selected.gender === "male"
+                          ? "Masculino"
+                          : "—"}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Altura:</span>{" "}
+                      {selected.heightCm ? `${selected.heightCm} cm` : "—"}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Peso:</span>{" "}
+                      {selected.weightKg ? `${selected.weightKg} kg` : "—"}
+                    </p>
+                  </>
+                )}
+                {usaComposicao &&
+                  (!selected.gender || !selected.heightCm || !selected.weightKg) && (
+                    <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+                      Faltam dados para o cálculo nutricional. Use <strong>Editar</strong> para
+                      preencher sexo, altura e peso.
+                    </p>
+                  )}
                 {selected.notes && (
                   <p>
                     <span className="text-muted-foreground">Observações:</span> {selected.notes}

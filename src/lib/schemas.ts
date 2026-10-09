@@ -1,18 +1,34 @@
 import { z } from "zod";
 
+/**
+ * Campos opcionais do formulário vêm como string vazia quando o usuário não
+ * preenche (o <Select> e o <Input type="number"> partem vazios).
+ * Sem tratar isso, "" reprova num z.enum() e `z.coerce.number()` transforma
+ * "" em 0 — o que dispara "Altura inválido" em campo em branco.
+ */
+const vazioParaUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
+
+/** Seleção opcional: vazio vira ausente. `const` preserva os tipos literais. */
+const enumOpcional = <const T extends readonly [string, ...string[]]>(values: T) =>
+  z.preprocess(vazioParaUndefined, z.enum(values).optional());
+
+/** Medida opcional: vazio vira ausente, em vez de virar 0. */
+const numeroOpcional = (min: number, max: number, mensagem: string) =>
+  z.preprocess(vazioParaUndefined, z.coerce.number().min(min, mensagem).max(max).optional());
+
 export const patientSchema = z.object({
   name: z.string().trim().min(3, "Informe o nome completo").max(120),
   email: z.string().trim().email("E-mail inválido").max(255).or(z.literal("")),
   phone: z.string().trim().min(8, "Telefone inválido").max(20),
   birthDate: z.string().min(1, "Informe a data de nascimento"),
   notes: z.string().trim().max(1000).optional().default(""),
-  gender: z.enum(["female", "male"]).optional(),
-  heightCm: z.coerce.number().min(50, "Altura inválida").max(260).optional(),
-  weightKg: z.coerce.number().min(2, "Peso inválido").max(400).optional(),
-  waistCm: z.coerce.number().min(20, "Valor inválido").max(250).optional(),
-  hipCm: z.coerce.number().min(20, "Valor inválido").max(250).optional(),
-  activityLevel: z.enum(["sedentary", "light", "moderate", "active", "athlete"]).optional(),
-  goal: z.enum(["lose", "maintain", "gain"]).optional(),
+  gender: enumOpcional(["female", "male"]),
+  heightCm: numeroOpcional(50, 260, "Altura inválida"),
+  weightKg: numeroOpcional(2, 400, "Peso inválido"),
+  waistCm: numeroOpcional(20, 250, "Cintura inválida"),
+  hipCm: numeroOpcional(20, 250, "Quadril inválido"),
+  activityLevel: enumOpcional(["sedentary", "light", "moderate", "active", "athlete"]),
+  goal: enumOpcional(["lose", "maintain", "gain"]),
 });
 export type PatientInput = z.infer<typeof patientSchema>;
 
