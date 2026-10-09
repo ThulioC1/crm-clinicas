@@ -1,5 +1,13 @@
 import {
-  addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc, where, orderBy,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  orderBy,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import type { Appointment, MedicalRecord, Patient, UserProfile } from "@/lib/types";
@@ -22,12 +30,21 @@ function createTenantRepo<T extends TenantEntity>(name: string, seed: T[]) {
   };
 
   return {
-    subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; },
+    subscribe(l: Listener) {
+      listeners.add(l);
+      return () => {
+        listeners.delete(l);
+      };
+    },
 
     async list(tenantId: string): Promise<T[]> {
       assertTenant(tenantId);
       if (isFirebaseConfigured && db) {
-        const q = query(collection(db, name), where("tenantId", "==", tenantId), orderBy("createdAt", "desc"));
+        const q = query(
+          collection(db, name),
+          where("tenantId", "==", tenantId),
+          orderBy("createdAt", "desc"),
+        );
         const snap = await getDocs(q);
         return snap.docs.map((s) => ({ id: s.id, ...s.data() }) as T);
       }
@@ -44,8 +61,10 @@ function createTenantRepo<T extends TenantEntity>(name: string, seed: T[]) {
 
     async update(tenantId: string, id: string, data: Partial<Omit<T, "id" | "tenantId">>) {
       assertTenant(tenantId);
-      if (isFirebaseConfigured && db) await updateDoc(doc(db, name, id), data as Record<string, unknown>);
-      else store = store.map((x) => (x.id === id && x.tenantId === tenantId ? { ...x, ...data } : x));
+      if (isFirebaseConfigured && db)
+        await updateDoc(doc(db, name, id), data as Record<string, unknown>);
+      else
+        store = store.map((x) => (x.id === id && x.tenantId === tenantId ? { ...x, ...data } : x));
       emit();
     },
 
@@ -66,7 +85,12 @@ export const recordsRepo = createTenantRepo<MedicalRecord>("medical_records", mo
 let users = [...mockUsers];
 const userListeners = new Set<Listener>();
 export const usersRepo = {
-  subscribe(l: Listener) { userListeners.add(l); return () => { userListeners.delete(l); }; },
+  subscribe(l: Listener) {
+    userListeners.add(l);
+    return () => {
+      userListeners.delete(l);
+    };
+  },
   async listAll(caller: UserProfile): Promise<UserProfile[]> {
     if (caller.role !== "super_admin") throw new Error("Acesso negado");
     if (isFirebaseConfigured && db) {
@@ -75,12 +99,20 @@ export const usersRepo = {
     }
     return users;
   },
-  async update(caller: UserProfile, id: string, data: Partial<Pick<UserProfile, "status" | "plan">>) {
+  async update(
+    caller: UserProfile,
+    id: string,
+    data: Partial<Pick<UserProfile, "status" | "plan">>,
+  ) {
     if (caller.role !== "super_admin") throw new Error("Acesso negado");
     if (isFirebaseConfigured && db) await updateDoc(doc(db, "users", id), data);
     else users = users.map((u) => (u.id === id ? { ...u, ...data } : u));
     userListeners.forEach((l) => l());
   },
-  findMock(email: string) { return users.find((u) => u.email === email); },
-  getMock(id: string) { return users.find((u) => u.id === id); },
+  findMock(email: string) {
+    return users.find((u) => u.email === email);
+  },
+  getMock(id: string) {
+    return users.find((u) => u.id === id);
+  },
 };

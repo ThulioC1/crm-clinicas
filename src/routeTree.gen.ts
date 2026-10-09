@@ -8,15 +8,15 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
+import { Route as rootRouteImport } from './routes/__root.tsx'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as DashboardAgendaRouteImport } from './routes/dashboard.agenda'
-import { Route as DashboardClientesRouteImport } from './routes/dashboard.clientes'
-import { Route as DashboardProntuariosRouteImport } from './routes/dashboard.prontuarios'
+import { Route as AdminRouteImport } from './routes/admin.tsx'
+import { Route as DashboardRouteImport } from './routes/dashboard.tsx'
+import { Route as LoginRouteImport } from './routes/login.tsx'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index.tsx'
+import { Route as DashboardAgendaRouteImport } from './routes/dashboard.agenda.tsx'
+import { Route as DashboardClientesRouteImport } from './routes/dashboard.clientes.tsx'
+import { Route as DashboardProntuariosRouteImport } from './routes/dashboard.prontuarios.tsx'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -92,33 +92,33 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/admin'
-    | '/dashboard'
-    | '/login'
-    | '/dashboard/agenda'
-    | '/dashboard/clientes'
-    | '/dashboard/prontuarios'
-    | '/dashboard/'
+  | '/'
+  | '/admin'
+  | '/dashboard'
+  | '/login'
+  | '/dashboard/agenda'
+  | '/dashboard/clientes'
+  | '/dashboard/prontuarios'
+  | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/admin'
-    | '/login'
-    | '/dashboard/agenda'
-    | '/dashboard/clientes'
-    | '/dashboard/prontuarios'
-    | '/dashboard'
+  | '/'
+  | '/admin'
+  | '/login'
+  | '/dashboard/agenda'
+  | '/dashboard/clientes'
+  | '/dashboard/prontuarios'
+  | '/dashboard'
   id:
-    | '__root__'
-    | '/'
-    | '/admin'
-    | '/dashboard'
-    | '/login'
-    | '/dashboard/agenda'
-    | '/dashboard/clientes'
-    | '/dashboard/prontuarios'
-    | '/dashboard/'
+  | '__root__'
+  | '/'
+  | '/admin'
+  | '/dashboard'
+  | '/login'
+  | '/dashboard/agenda'
+  | '/dashboard/clientes'
+  | '/dashboard/prontuarios'
+  | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {

@@ -8,7 +8,13 @@ export function useLive<T>(source: Source<T>, load: () => Promise<T[]>, deps: un
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const refresh = useCallback(() => load().then(setData).finally(() => setLoading(false)), deps);
+  const refresh = useCallback(
+    () =>
+      load()
+        .then(setData)
+        .finally(() => setLoading(false)),
+    deps,
+  );
   useEffect(() => {
     refresh();
     return source.subscribe(refresh);

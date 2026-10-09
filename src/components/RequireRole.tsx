@@ -11,11 +11,16 @@ export function RequireRole({ role, children }: { role: Role; children: ReactNod
   useEffect(() => {
     if (loading) return;
     if (!user) navigate({ to: "/login", replace: true });
-    else if (!allowed) navigate({ to: user.role === "super_admin" ? "/admin" : "/dashboard", replace: true });
+    else if (!allowed)
+      navigate({ to: user.role === "super_admin" ? "/admin" : "/dashboard", replace: true });
   }, [loading, user, allowed, navigate]);
 
   if (loading || !allowed) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Verificando acesso…</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Verificando acesso…
+      </div>
+    );
   }
   return <>{children}</>;
 }
