@@ -50,6 +50,17 @@ service cloud.firestore {
       allow update: if ownsResource() && keepsTenant();
     }
 
+    match /clinical_documents/{id} {
+      allow read: if ownsResource();
+      allow create: if createsInOwnTenant()
+        && request.resource.data.patientId is string;
+      allow update: if ownsResource() && keepsTenant()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'items', 'notes', 'returnDate', 'updatedAt'
+        ]);
+      allow delete: if ownsResource();
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

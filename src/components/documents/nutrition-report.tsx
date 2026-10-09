@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   DocumentFooter,
   DocumentHeader,
@@ -27,6 +28,14 @@ export interface NutritionReportProps extends DocumentBrand {
     plano: MealPlan | null;
     activityLevel: keyof typeof ACTIVITY_FACTORS;
   };
+  /** Texto de cada refeição; por padrão usa a divisão padrão. */
+  meals?: { label: string; text?: string }[];
+  /** Modo de edição: refeições e observações viram campos preenchíveis. */
+  editable?: boolean;
+  renderMeal?: (label: string) => ReactNode;
+  renderNotes?: () => ReactNode;
+  /** Orientações gerais já prontas (modo somente leitura). */
+  notes?: string | undefined;
 }
 
 /** Relatório de avaliação nutricional pronto para impressão, com a marca do profissional. */
@@ -34,7 +43,12 @@ export function PrintableNutritionReport(props: NutritionReportProps) {
   const { patient, formulaLabel, result, professionalName, professionalSpecialty, registerLabel } =
     props;
   const { iem, bmi, rcq, plano, activityLevel } = result;
+  const { editable, renderMeal, renderNotes } = props;
   const now = new Date();
+
+  const refeicoes = props.meals?.length
+    ? props.meals
+    : MEAL_SPLIT.map((m) => ({ label: m.label, text: "" }));
 
   const riscoAbdominal =
     patient.waistCm && patient.gender
@@ -155,20 +169,34 @@ export function PrintableNutritionReport(props: NutritionReportProps) {
                 <th>Refeição</th>
                 <th>% do VET</th>
                 <th>kcal</th>
+                {editable && <th>Alimentos / orientações</th>}
               </tr>
             </thead>
             <tbody>
-              {MEAL_SPLIT.map((m) => (
-                <tr key={m.label}>
-                  <td>{m.label}</td>
-                  <td>{m.percent}%</td>
-                  <td>{Math.round((plano.kcal * m.percent) / 100 / 10) * 10}</td>
-                </tr>
-              ))}
+              {refeicoes.map((m) => {
+                const padrao = MEAL_SPLIT.find((x) => x.label === m.label);
+                return (
+                  <tr key={m.label}>
+                    <td>{m.label}</td>
+                    <td>{padrao?.percent ?? 0}%</td>
+                    <td>{Math.round((plano.kcal * (padrao?.percent ?? 0)) / 100 / 10) * 10}</td>
+                    {editable && <td>{renderMeal ? renderMeal(m.label) : (m.text ?? "")}</td>}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </section>
       )}
+
+      <section className="doc-section">
+        <h2 className="doc-heading">Orientações gerais</h2>
+        {editable && renderNotes ? (
+          renderNotes()
+        ) : (
+          <p className="doc-record-body">{props.notes ?? ""}</p>
+        )}
+      </section>
 
       <DocumentFooter
         brand={{

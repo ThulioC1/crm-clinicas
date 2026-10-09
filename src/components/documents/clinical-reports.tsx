@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { DocumentFooter, DocumentHeader, type DocumentBrand } from "./document-layout";
 import type { MedicalRecord } from "@/lib/types";
 
@@ -5,16 +6,17 @@ export interface RecordReportProps extends DocumentBrand {
   patientName: string;
   patientBirthDate: string;
   records: MedicalRecord[];
-  /** Filtra o prontuário impresso, quando o documento é uma evolução isolada. */
-  focusRecordId?: string;
+  /** Botão de edição de cada evolução, fora do papel impresso. */
+  renderBefore?: (record: MedicalRecord) => ReactNode;
+  /** Conteúdo da evolução — vira campo editável quando o item está em edição. */
+  renderContent?: (record: MedicalRecord) => ReactNode;
 }
 
 /** Prontuário completo do paciente, pronto para impressão e arquivo. */
 export function PrintableRecordReport(props: RecordReportProps) {
-  const { patientName, patientBirthDate, records, focusRecordId } = props;
+  const { patientName, patientBirthDate, records, renderBefore, renderContent } = props;
   const now = new Date();
-  const ordenado = [...records].sort((a, b) => b.date.localeCompare(a.date));
-  const evolucoes = focusRecordId ? ordenado.filter((r) => r.id === focusRecordId) : ordenado;
+  const evolucoes = [...records].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <article className="doc">
@@ -33,7 +35,7 @@ export function PrintableRecordReport(props: RecordReportProps) {
           {patientBirthDate ? patientBirthDate.split("-").reverse().join("/") : "—"}
         </p>
         <p className="doc-line">
-          <span className="doc-line-label">Total de evoluções:</span> {ordenado.length}
+          <span className="doc-line-label">Total de evoluções:</span> {evolucoes.length}
         </p>
       </section>
 
@@ -45,11 +47,12 @@ export function PrintableRecordReport(props: RecordReportProps) {
         <section className="doc-section">
           {evolucoes.map((r) => (
             <article key={r.id} className="doc-record">
+              {renderBefore && <div className="mb-1">{renderBefore(r)}</div>}
               <div className="doc-record-head">
                 <h2 className="doc-heading">{r.title}</h2>
                 <span className="doc-record-date">{r.date.split("-").reverse().join("/")}</span>
               </div>
-              <p className="doc-record-body">{r.content}</p>
+              <div className="doc-record-body">{renderContent ? renderContent(r) : r.content}</div>
             </article>
           ))}
         </section>
@@ -73,14 +76,31 @@ export interface PrescriptionReportProps extends DocumentBrand {
   notes?: string | undefined;
   /** Data de retorno, quando houver. */
   returnDate?: string | undefined;
+  /** Modo de edição: as células viram campos preenchíveis. */
+  editable?: boolean;
+  /** Recebe o patch de uma célula editada. */
+  onItemsChange?: (index: number, patch: Partial<PrescriptionItem>) => void;
+  renderRowExtra?: (index: number) => ReactNode;
+  renderNotes?: () => ReactNode;
+  renderReturnDate?: () => ReactNode;
 }
 
-/** Receituário/prescrição. Item vazio é renderizado como linha para escrita à mão. */
+/** Receituário/prescrição. Em edição, cada célula é um campo; no papel, uma tabela. */
 export function PrintablePrescriptionReport(props: PrescriptionReportProps) {
-  const { patientName, patientBirthDate, items, notes, returnDate } = props;
+  const {
+    patientName,
+    patientBirthDate,
+    items,
+    notes,
+    returnDate,
+    editable,
+    renderRowExtra,
+    renderNotes,
+    renderReturnDate,
+  } = props;
   const now = new Date();
-  const linhas = items.filter((i) => i.name.trim() !== "");
-  const totalLinhas = Math.max(linhas.length, 6);
+  const preenchidas = items.filter((i) => i.name.trim() !== "");
+  const linhas = editable ? Math.max(preenchidas.length, 4) : Math.max(preenchidas.length, 6);
 
   return (
     <article className="doc">
@@ -106,39 +126,75 @@ export function PrintablePrescriptionReport(props: PrescriptionReportProps) {
             {returnDate.split("-").reverse().join("/")}
           </p>
         )}
+        {editable && renderReturnDate && <div className="no-print mt-2">{renderReturnDate()}</div>}
       </section>
 
       <section className="doc-section">
         <h2 className="doc-heading">Prescrição</h2>
-        <table className="doc-table">
-          <thead>
-            <tr>
-              <th style={{ width: "45%" }}>Medicamento / suplemento</th>
-              <th style={{ width: "20%" }}>Dose</th>
-              <th>Orientações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: totalLinhas }, (_, i) => {
-              const item = linhas[i];
-              return (
-                <tr key={i} className="doc-rx-row">
-                  <td>{item?.name ?? ""}</td>
-                  <td>{item?.dosage ?? ""}</td>
-                  <td>{item?.instructions ?? ""}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="doc-table-scroll">
+          <table className="doc-table">
+            <thead>
+              <tr>
+                <th style={{ width: "42%" }}>Medicamento / suplemento</th>
+                <th style={{ width: "18%" }}>Dose</th>
+                <th>Orientações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: linhas }, (_, i) => {
+                const item = preenchidas[i];
+                if (!editable) {
+                  return (
+                    <tr key={i} className="doc-rx-row">
+                      <td>{item?.name ?? ""}</td>
+                      <td>{item?.dosage ?? ""}</td>
+                      <td>{item?.instructions ?? ""}</td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={i}>
+                    <td>
+                      <input
+                        className="doc-input"
+                        placeholder="Medicamento"
+                        value={item?.name ?? ""}
+                        onChange={(e) => props.onItemsChange?.(i, { name: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="doc-input"
+                        placeholder="Dose"
+                        value={item?.dosage ?? ""}
+                        onChange={(e) => props.onItemsChange?.(i, { dosage: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-1">
+                        <input
+                          className="doc-input"
+                          placeholder="Orientações"
+                          value={item?.instructions ?? ""}
+                          onChange={(e) =>
+                            props.onItemsChange?.(i, { instructions: e.target.value })
+                          }
+                        />
+                        {renderRowExtra?.(i)}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      {notes && (
-        <section className="doc-section">
-          <h2 className="doc-heading">Orientações gerais</h2>
-          <p className="doc-record-body">{notes}</p>
-        </section>
-      )}
+      <section className="doc-section">
+        <h2 className="doc-heading">Orientações gerais</h2>
+        {editable && renderNotes ? renderNotes() : <p className="doc-record-body">{notes ?? ""}</p>}
+      </section>
 
       <DocumentFooter brand={props} date={now} />
     </article>

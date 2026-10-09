@@ -12,7 +12,14 @@ import {
   type QuerySnapshot,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import type { Appointment, MedicalRecord, Patient, UserProfile } from "@/lib/types";
+import type {
+  Appointment,
+  MedicalRecord,
+  Patient,
+  PrescriptionItem,
+  SavedDocument,
+  UserProfile,
+} from "@/lib/types";
 import { mockAppointments, mockPatients, mockRecords, mockUsers } from "./mock-data";
 
 type TenantEntity = { id: string; tenantId: string; createdAt: string };
@@ -123,6 +130,60 @@ function createTenantRepo<T extends TenantEntity>(name: string, seed: T[]) {
 export const patientsRepo = createTenantRepo<Patient>("patients", mockPatients);
 export const appointmentsRepo = createTenantRepo<Appointment>("appointments", mockAppointments);
 export const recordsRepo = createTenantRepo<MedicalRecord>("medical_records", mockRecords);
+
+/**
+ * Documentos editáveis por paciente (receita, plano alimentar).
+ *
+ * O Firestore exige um índice para a ordenação por `updatedAt`; por isso o
+ * repositório cai para a ordenação no cliente enquanto o índice não existe,
+ * igual a `createTenantRepo`.
+ */
+const savedDocsRepo = createTenantRepo<SavedDocument>("clinical_documents", []);
+
+export const patientDocsRepo = {
+  subscribe: savedDocsRepo.subscribe,
+  async list(tenantId: string, patientId: string): Promise<SavedDocument[]> {
+    return (await savedDocsRepo.list(tenantId)).filter((d) => d.patientId === patientId);
+  },
+  async save(
+    tenantId: string,
+    data: Pick<SavedDocument, "id" | "patientId" | "kind" | "items" | "notes" | "returnDate">,
+  ): Promise<void> {
+    await savedDocsRepo.update(tenantId, data.id, {
+      patientId: data.patientId,
+      kind: data.kind,
+      items: data.items,
+      notes: data.notes,
+      returnDate: data.returnDate,
+      updatedAt: new Date().toISOString(),
+    } as Partial<SavedDocument>);
+  },
+  /** Documento existente do paciente para aquele tipo, se houver. */
+  async find(tenantId: string, patientId: string, kind: SavedDocument["kind"]) {
+    const docs = await this.list(tenantId, patientId);
+    return docs.find((d) => d.kind === kind) ?? null;
+  },
+  /** Cria se ainda não existir e devolve o id. */
+  async ensureId(
+    tenantId: string,
+    patientId: string,
+    kind: SavedDocument["kind"],
+  ): Promise<string> {
+    const existing = await this.find(tenantId, patientId, kind);
+    if (existing) return existing.id;
+    const payload = {
+      patientId,
+      kind,
+      items: [] as PrescriptionItem[],
+      notes: "",
+      returnDate: "",
+    };
+    await savedDocsRepo.create(tenantId, payload);
+    const criado = await this.find(tenantId, patientId, kind);
+    if (!criado) throw new Error("Não foi possível criar o documento.");
+    return criado.id;
+  },
+};
 
 /** Coleção global `users` — apenas super_admin (garantido também pelas Security Rules). */
 let users = [...mockUsers];

@@ -48,14 +48,22 @@ export interface Patient extends TenantDoc {
 /** Documento clínico assinado pelo profissional, pronto para impressão. */
 export type DocumentKind = "prontuario" | "prescricao" | "atestado" | "declaracao";
 
-export interface ClinicalDocument extends TenantDoc {
-  kind: DocumentKind;
+/** Documentos editáveis e salvos por paciente (receita, plano alimentar). */
+export type SavedDocKind = "prescricao" | "plano_alimentar";
+
+export interface PrescriptionItem {
+  name: string;
+  dosage?: string;
+  instructions?: string;
+}
+
+export interface SavedDocument extends TenantDoc {
   patientId: string;
-  date: string;
-  title: string;
-  content: string;
-  /** Snapshot do cálculo que originou o documento (ex.: IEM, plano alimentar). */
-  payload?: Record<string, string | number>;
+  kind: SavedDocKind;
+  items: PrescriptionItem[];
+  notes: string;
+  returnDate: string;
+  updatedAt?: string;
 }
 export interface Appointment extends TenantDoc {
   patientId: string;

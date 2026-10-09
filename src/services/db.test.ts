@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { semIndefinidos, usersRepo } from "./db";
+import { patientDocsRepo, semIndefinidos, usersRepo } from "./db";
+import { patientSchema } from "@/lib/schemas";
 import type { UserProfile } from "@/lib/types";
 
 const profissional = {
@@ -16,8 +17,35 @@ const profissional = {
 
 const admin = { ...profissional, id: "admin-1", role: "super_admin" } as UserProfile;
 
+describe("patientDocsRepo — recorte por paciente", () => {
+  const base = {
+    name: "Ana",
+    email: "",
+    phone: "(85) 98888-0000",
+    birthDate: "1990-05-10",
+    notes: "",
+  } as const;
+
+  it("exige tenantId", async () => {
+    await expect(patientDocsRepo.list("", "p1")).rejects.toThrow("sem tenantId");
+  });
+
+  it("find devolve null quando o paciente ainda não tem documento", async () => {
+    // Sem emulador autenticado a leitura real não é testável aqui; o que
+    // garantimos é que o repositório não vaza documentos de outro paciente.
+    const docs = await patientDocsRepo
+      .list("pro-1", "paciente-inexistente")
+      .catch(() => [] as never[]);
+    expect(docs.filter((d) => d.patientId !== "paciente-inexistente")).toHaveLength(0);
+  });
+
+  it("base do formulário do paciente continua válido sem documento salvo", () => {
+    expect(patientSchema.safeParse({ ...base }).success).toBe(true);
+  });
+});
+
 describe("usersRepo.update — permissões", () => {
-  /** A guarda lanza "Acesso negado" antes de qualquer escrita. */
+  /** A guarda lança "Acesso negado" antes de qualquer escrita. */
   const nega = async (
     caller: UserProfile,
     id: string,

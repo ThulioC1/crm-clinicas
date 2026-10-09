@@ -335,3 +335,49 @@
 .doc-rx-row td {
   height: 2.25rem;
 }
+/* Área de rolagem da prévia do documento dentro do diálogo */
+.doc-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding-right: 0.25rem;
+}
+
+/* Tabela larga em tela pequena */
+.doc-table-scroll {
+  overflow-x: auto;
+}
+
+/* Célula editável dentro do documento */
+.doc-input {
+  width: 100%;
+  min-width: 4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--background);
+  padding: 0.25rem 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.doc-input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+/* Na impressão os campos somem e resta o texto preenchido */
+@media print {
+  .doc-scroll {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .doc-table-scroll {
+    overflow: visible;
+  }
+
+  .doc-input {
+    border: 0;
+    padding: 0;
+  }
+}
