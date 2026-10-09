@@ -29,7 +29,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -119,97 +118,95 @@ function AdminPage() {
         title="Visão geral da plataforma"
         subtitle="Status: todos os serviços operacionais"
         action={
-          <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Novo Profissional
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[420px]">
-              <DialogHeader>
-                <DialogTitle>Cadastrar novo profissional</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
-                      <FormItem>
-                        <FormLabel>Nome completo</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Dra. Marina Lopes" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
-                      <FormItem>
-                        <FormLabel>E-mail</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="marina@saude.app" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="specialty"
-                    render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
-                      <FormItem>
-                        <FormLabel>Especialidade</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Nutricionista" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="plan"
-                    render={({ field }: { field: { onChange: (value: string) => void; value: string } }) => (
-                      <FormItem>
-                        <FormLabel>Plano</FormLabel>
-                        <Select
-                          onValueChange={(value: string) => field.onChange(value)}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o plano" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="clinic">Clínica</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setOpenCreate(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Cadastrar
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setOpenCreate(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Novo Profissional
+          </Button>
         }
       />
+      <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Cadastrar novo profissional</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                  <FormItem>
+                    <FormLabel>Nome completo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Dra. Marina Lopes" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="marina@saude.app" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="specialty"
+                render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                  <FormItem>
+                    <FormLabel>Especialidade</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Nutricionista" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="plan"
+                render={({ field }: { field: { onChange: (value: string) => void; value: string } }) => (
+                  <FormItem>
+                    <FormLabel>Plano</FormLabel>
+                    <Select
+                      onValueChange={(value: string) => field.onChange(value)}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o plano" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="pro">Pro</SelectItem>
+                        <SelectItem value="clinic">Clínica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => setOpenCreate(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Cadastrar
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl border bg-card p-5">

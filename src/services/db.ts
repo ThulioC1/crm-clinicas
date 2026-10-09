@@ -121,7 +121,7 @@ export const usersRepo = {
   async update(
     caller: UserProfile,
     id: string,
-    data: Partial<Pick<UserProfile, "status" | "plan">>,
+    data: Partial<Pick<UserProfile, "status" | "plan" | "googleRefreshToken" | "googleCalendarId">>,
   ) {
     if (caller.role !== "super_admin") throw new Error("Acesso negado");
     if (isFirebaseConfigured && db) await updateDoc(doc(db, "users", id), data);

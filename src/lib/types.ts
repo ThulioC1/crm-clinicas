@@ -12,6 +12,8 @@ export interface UserProfile {
   status: AccountStatus;
   plan: Plan;
   createdAt: string;
+  googleRefreshToken?: string;
+  googleCalendarId?: string;
 }
 
 interface TenantDoc {
