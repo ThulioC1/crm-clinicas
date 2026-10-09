@@ -5,6 +5,7 @@ import {
   doc,
   getDocs,
   query,
+  setDoc,
   updateDoc,
   where,
   orderBy,
@@ -98,6 +99,24 @@ export const usersRepo = {
       return snap.docs.map((s) => ({ id: s.id, ...s.data() }) as UserProfile);
     }
     return users;
+  },
+  async create(
+    caller: UserProfile,
+    data: Omit<UserProfile, "id" | "createdAt">,
+  ): Promise<string> {
+    if (caller.role !== "super_admin") throw new Error("Acesso negado");
+    const payload = { ...data, createdAt: new Date().toISOString() };
+    let newId: string;
+    if (isFirebaseConfigured && db) {
+      const ref = doc(collection(db, "users"));
+      newId = ref.id;
+      await setDoc(ref, { ...payload, id: newId });
+    } else {
+      newId = crypto.randomUUID();
+      users = [{ ...payload, id: newId }, ...users];
+    }
+    userListeners.forEach((l) => l());
+    return newId;
   },
   async update(
     caller: UserProfile,

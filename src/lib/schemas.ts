@@ -30,3 +30,11 @@ export const loginSchema = z.object({
   email: z.string().trim().email("E-mail inválido"),
   password: z.string().min(6, "Mínimo de 6 caracteres"),
 });
+
+export const professionalSchema = z.object({
+  name: z.string().trim().min(3, "Informe o nome completo").max(120),
+  email: z.string().trim().email("E-mail inválido").max(255),
+  specialty: z.string().trim().min(2, "Informe a especialidade").max(80),
+  plan: z.enum(["pro", "clinic"]),
+});
+export type ProfessionalInput = z.infer<typeof professionalSchema>;

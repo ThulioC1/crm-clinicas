@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Plus, UserPlus } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { RequireRole } from "@/components/RequireRole";
@@ -23,6 +24,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { professionalSchema, type ProfessionalInput } from "@/lib/schemas";
 import type { Plan, UserProfile } from "@/lib/types";
 
 export const Route = createFileRoute("/admin")({
@@ -49,11 +70,36 @@ function AdminPage() {
   const me = user as UserProfile;
   const { data } = useLive(usersRepo, () => usersRepo.listAll(me), [me.id]);
   const pros = data.filter((u) => u.role === "professional");
+  const [openCreate, setOpenCreate] = useState(false);
+
+  const form = useForm<ProfessionalInput>({
+    resolver: zodResolver(professionalSchema),
+    defaultValues: { plan: "pro" },
+  });
 
   const update = async (id: string, patch: Partial<Pick<UserProfile, "status" | "plan">>) => {
     try {
       await usersRepo.update(me, id, patch);
       toast.success("Profissional atualizado");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const onSubmit = async (values: ProfessionalInput) => {
+    try {
+      const newId = await usersRepo.create(me, {
+        name: values.name,
+        email: values.email,
+        role: "professional",
+        tenantId: crypto.randomUUID(),
+        specialty: values.specialty,
+        status: "active",
+        plan: values.plan,
+      });
+      toast.success("Profissional cadastrado com sucesso");
+      setOpenCreate(false);
+      form.reset({ plan: "pro" });
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -72,6 +118,97 @@ function AdminPage() {
       <PageHeader
         title="Visão geral da plataforma"
         subtitle="Status: todos os serviços operacionais"
+        action={
+          <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Novo Profissional
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[420px]">
+              <DialogHeader>
+                <DialogTitle>Cadastrar novo profissional</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                      <FormItem>
+                        <FormLabel>Nome completo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Dra. Marina Lopes" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                      <FormItem>
+                        <FormLabel>E-mail</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="marina@saude.app" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="specialty"
+                    render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                      <FormItem>
+                        <FormLabel>Especialidade</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Nutricionista" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="plan"
+                    render={({ field }: { field: { onChange: (value: string) => void; value: string } }) => (
+                      <FormItem>
+                        <FormLabel>Plano</FormLabel>
+                        <Select
+                          onValueChange={(value: string) => field.onChange(value)}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o plano" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="clinic">Clínica</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setOpenCreate(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Cadastrar
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        }
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
