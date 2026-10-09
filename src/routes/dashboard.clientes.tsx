@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search } from "lucide-react";
@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -25,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { usePatients, useRecords, useAppointments, useTenantId } from "@/hooks/use-tenant";
+import { usePatients, useTenantId } from "@/hooks/use-tenant";
 import { patientsRepo } from "@/services/db";
 import { patientSchema } from "@/lib/schemas";
 import { ACTIVITY_FACTORS } from "@/lib/calculations/nutrition";
@@ -78,17 +77,17 @@ const fromPatient = (p: Patient) => ({
   goal: p.goal ?? ("" as const),
 });
 
+const br = (iso: string) => iso.split("-").reverse().join("/");
+
 function Clients() {
+  const navigate = useNavigate();
   const tenantId = useTenantId();
   const { data } = usePatients();
-  const { data: records } = useRecords();
-  const { data: appts } = useAppointments();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<Patient | null>(null);
-  const [selected, setSelected] = useState<Patient | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -133,7 +132,6 @@ function Clients() {
   const openEdit = (p: Patient) => {
     setEditing(p);
     setForm(fromPatient(p));
-    setSelected(null);
     setOpen(true);
   };
 
@@ -176,12 +174,19 @@ function Clients() {
           </TableHeader>
           <TableBody>
             {rows.map((p) => (
-              <TableRow key={p.id} className="cursor-pointer" onClick={() => setSelected(p)}>
+              <TableRow
+                key={p.id}
+                className="cursor-pointer"
+                onClick={() =>
+                  navigate({ to: "/dashboard/clientes/$patientId", params: { patientId: p.id } })
+                }
+              >
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell>{p.phone}</TableCell>
-                <TableCell className="hidden md:table-cell">{p.email}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {p.birthDate.split("-").reverse().join("/")}
+                <TableCell className="hidden md:table-cell">{p.email || "—"}</TableCell>
+                <TableCell className="hidden md:table-cell">{br(p.birthDate)}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {p.weightKg ? `${p.weightKg} kg` : "—"}
                 </TableCell>
               </TableRow>
             ))}
@@ -339,81 +344,6 @@ function Clients() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="overflow-y-auto">
-          {selected && (
-            <>
-              <SheetHeader className="flex-row items-center justify-between space-y-0 pr-12">
-                <SheetTitle>{selected.name}</SheetTitle>
-                <Button variant="outline" size="sm" onClick={() => openEdit(selected)}>
-                  Editar
-                </Button>
-              </SheetHeader>
-              <div className="space-y-2 px-4 text-sm">
-                <p>
-                  <span className="text-muted-foreground">Telefone:</span> {selected.phone}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">E-mail:</span> {selected.email || "—"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Nascimento:</span>{" "}
-                  {selected.birthDate.split("-").reverse().join("/")}
-                </p>
-                {(selected.gender || selected.heightCm || selected.weightKg) && (
-                  <>
-                    <p>
-                      <span className="text-muted-foreground">Sexo:</span>{" "}
-                      {selected.gender === "female"
-                        ? "Feminino"
-                        : selected.gender === "male"
-                          ? "Masculino"
-                          : "—"}
-                    </p>
-                    <p>
-                      <span className="text-muted-foreground">Altura:</span>{" "}
-                      {selected.heightCm ? `${selected.heightCm} cm` : "—"}
-                    </p>
-                    <p>
-                      <span className="text-muted-foreground">Peso:</span>{" "}
-                      {selected.weightKg ? `${selected.weightKg} kg` : "—"}
-                    </p>
-                  </>
-                )}
-                {!selected.gender || !selected.heightCm || !selected.weightKg ? (
-                  <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
-                    Faltam sexo, altura ou peso. Use <strong>Editar</strong> para preencher —
-                    necessário para o cálculo de IEM e IMC.
-                  </p>
-                ) : null}
-                {selected.notes && (
-                  <p>
-                    <span className="text-muted-foreground">Observações:</span> {selected.notes}
-                  </p>
-                )}
-                <h3 className="pt-4 font-semibold">Consultas</h3>
-                {appts
-                  .filter((a) => a.patientId === selected.id)
-                  .map((a) => (
-                    <p key={a.id} className="text-muted-foreground">
-                      {a.date.split("-").reverse().join("/")} {a.time} — {a.type}
-                    </p>
-                  ))}
-                <h3 className="pt-4 font-semibold">Evoluções</h3>
-                {records
-                  .filter((r) => r.patientId === selected.id)
-                  .map((r) => (
-                    <div key={r.id} className="rounded-lg border p-3">
-                      <p className="font-medium">{r.title}</p>
-                      <p className="mt-1 text-muted-foreground">{r.content}</p>
-                    </div>
-                  ))}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

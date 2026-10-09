@@ -7,7 +7,7 @@ interface Source<T> {
 export function useLive<T>(source: Source<T>, load: () => Promise<T[]>, deps: unknown[]) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  /* eslint-disable react-hooks/exhaustive-deps -- `deps` é a dependência declarada pelo chamador */
   const refresh = useCallback(
     () =>
       load()

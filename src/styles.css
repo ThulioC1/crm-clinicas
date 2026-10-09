@@ -297,3 +297,41 @@
     display: none !important;
   }
 }
+.doc-record {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  break-inside: avoid;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-record:last-child {
+  border-bottom: 0;
+}
+
+.doc-record-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.doc-record-head .doc-heading {
+  margin-bottom: 0.125rem;
+}
+
+.doc-record-date {
+  flex: none;
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.doc-record-body {
+  white-space: pre-line;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* Linhas do receituário ficam altas para preenchimento à mão */
+.doc-rx-row td {
+  height: 2.25rem;
+}
