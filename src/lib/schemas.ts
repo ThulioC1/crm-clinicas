@@ -31,6 +31,24 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Mínimo de 6 caracteres"),
 });
 
+export const registerSchema = z.object({
+  name: z.string().trim().min(3, "Informe o nome completo").max(120),
+  email: z.string().trim().email("E-mail inválido").max(255),
+  password: z.string().min(6, "Mínimo de 6 caracteres").max(72),
+});
+export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    newPassword: z.string().min(6, "Mínimo de 6 caracteres").max(72),
+    confirmPassword: z.string().min(6, "Mínimo de 6 caracteres").max(72),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const professionalSchema = z.object({
   name: z.string().trim().min(3, "Informe o nome completo").max(120),
   email: z.string().trim().email("E-mail inválido").max(255),

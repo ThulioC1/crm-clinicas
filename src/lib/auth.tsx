@@ -4,8 +4,19 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { auth, db, googleProvider, isFirebaseConfigured } from "./firebase";
 import { usersRepo } from "@/services/db";
 import type { UserProfile } from "./types";
@@ -15,17 +26,63 @@ interface AuthState {
   loading: boolean;
   loginEmail: (email: string, password: string) => Promise<UserProfile>;
   loginGoogle: () => Promise<UserProfile>;
+  changePassword: (newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthState | null>(null);
 const DEMO_KEY = "demo-session-uid";
 
+/**
+ * Cria a conta no Firebase Auth pela REST API. O SDK do cliente só cria contas
+ * para o próprio usuário, então usamos o endpoint signUp diretamente — assim a
+ * sessão do admin que está criando o registro não é alterada.
+ * A senha é aleatória: o profissional redefine a própria senha pelo e-mail.
+ */
+export async function createAuthAccount(email: string): Promise<void> {
+  const apiKey = import.meta.env["VITE_FIREBASE_API_KEY"] as string | undefined;
+  if (!apiKey) throw new Error("Firebase não configurado.");
+
+  const tempPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, password: tempPassword, returnSecureToken: true }),
+    },
+  );
+
+  if (res.ok) return;
+  const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+  const message = err?.error?.message ?? "";
+  if (message.includes("EMAIL_EXISTS")) throw new Error("Já existe uma conta com este e-mail.");
+  if (message.includes("OPERATION_NOT_ALLOWED")) {
+    throw new Error("Ative o login por e-mail/senha no Firebase Console → Authentication.");
+  }
+  if (message.includes("INVALID_EMAIL")) throw new Error("E-mail inválido.");
+  throw new Error("Não foi possível criar a conta no Firebase Auth.");
+}
+
+/**
+ * As Security Rules exigem o perfil em users/{uid}. Enquanto o profissional não
+ * entra, o documento criado pelo admin (id aleatório) fica inacessível para ele —
+ * por isso mantemos role/status aqui e removemos o documento assim que a conta
+ * é criada pela primeira vez.
+ */
+async function clearPendingProfile(uid: string, email: string) {
+  if (!db) return;
+  const snap = await getDocs(query(collection(db, "users"), where("email", "==", email)));
+  await Promise.all(snap.docs.filter((d) => d.id !== uid).map((d) => deleteDoc(d.ref)));
+}
+
 async function loadProfile(uid: string, email: string, name: string): Promise<UserProfile> {
   const ref = doc(db!, "users", uid);
   const snap = await getDoc(ref);
   if (snap.exists()) return { id: uid, ...snap.data() } as UserProfile;
-  // Primeiro login: cria perfil como profissional (permitido pelas Security Rules)
+
+  await clearPendingProfile(uid, email);
+  // Primeiro acesso: cria perfil como profissional (permitido pelas Security Rules)
   const profile: Omit<UserProfile, "id"> = {
     name,
     email,
@@ -92,6 +149,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return p;
       }
       throw new Error("Login com Google disponível após configurar o Firebase.");
+    },
+    async changePassword(newPassword) {
+      if (!isFirebaseConfigured || !auth) throw new Error("Firebase não configurado.");
+      const current = auth.currentUser;
+      if (!current) throw new Error("Sessão expirada. Entre novamente.");
+      await updatePassword(current, newPassword);
+      // A flag fica no Firestore: forces a troca na próxima entrada
+      if (current.uid) {
+        await updateDoc(doc(db!, "users", current.uid), { mustChangePassword: false });
+        setUser((u) => (u ? { ...u, mustChangePassword: false } : u));
+      }
     },
     async logout() {
       if (isFirebaseConfigured && auth) await signOut(auth);

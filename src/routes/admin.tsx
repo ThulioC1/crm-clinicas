@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LayoutDashboard, Plus, UserPlus, Trash2 } from "lucide-react";
+import { LayoutDashboard, Mail, Plus, UserPlus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -26,12 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -45,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { professionalSchema, type ProfessionalInput } from "@/lib/schemas";
+import { createAuthAccount } from "@/lib/auth";
 import type { Plan, UserProfile } from "@/lib/types";
 
 export const Route = createFileRoute("/admin")({
@@ -101,7 +97,11 @@ function AdminPage() {
 
   const onSubmit = async (values: ProfessionalInput) => {
     try {
-      const newId = await usersRepo.create(me, {
+      // 1. Cria a conta no Firebase Auth (senha aleatória) para o e-mail de reset funcionar
+      await createAuthAccount(values.email);
+
+      // 2. Cadastra o perfil no Firestore
+      await usersRepo.create(me, {
         name: values.name,
         email: values.email,
         role: "professional",
@@ -109,15 +109,24 @@ function AdminPage() {
         specialty: values.specialty,
         status: "active",
         plan: values.plan,
+        mustChangePassword: true,
       });
-      
-      // Envia e-mail para o profissional definir a senha (cria conta no Auth)
-      const auth = getAuth(app!);
-      await sendPasswordResetEmail(auth, values.email);
-      
-      toast.success("Profissional cadastrado! E-mail de convite enviado.");
+
+      // 3. Envia o e-mail para o profissional redefinir a senha
+      await sendPasswordResetEmail(getAuth(app!), values.email);
+
       setOpenCreate(false);
       form.reset({ plan: "pro" });
+      toast.success(`Profissional cadastrado! E-mail de redefinição enviado para ${values.email}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const resendReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(getAuth(app!), email);
+      toast.success(`E-mail de redefinição enviado para ${email}`);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -153,7 +162,16 @@ function AdminPage() {
               <FormField
                 control={form.control}
                 name="name"
-                render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                render={({
+                  field,
+                }: {
+                  field: {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+                    value: string;
+                    onBlur: () => void;
+                    ref: (el: HTMLInputElement | null) => void;
+                  };
+                }) => (
                   <FormItem>
                     <FormLabel>Nome completo</FormLabel>
                     <FormControl>
@@ -166,7 +184,16 @@ function AdminPage() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                render={({
+                  field,
+                }: {
+                  field: {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+                    value: string;
+                    onBlur: () => void;
+                    ref: (el: HTMLInputElement | null) => void;
+                  };
+                }) => (
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
@@ -179,7 +206,16 @@ function AdminPage() {
               <FormField
                 control={form.control}
                 name="specialty"
-                render={({ field }: { field: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; value: string; onBlur: () => void; ref: (el: HTMLInputElement | null) => void } }) => (
+                render={({
+                  field,
+                }: {
+                  field: {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+                    value: string;
+                    onBlur: () => void;
+                    ref: (el: HTMLInputElement | null) => void;
+                  };
+                }) => (
                   <FormItem>
                     <FormLabel>Especialidade</FormLabel>
                     <FormControl>
@@ -192,7 +228,11 @@ function AdminPage() {
               <FormField
                 control={form.control}
                 name="plan"
-                render={({ field }: { field: { onChange: (value: string) => void; value: string } }) => (
+                render={({
+                  field,
+                }: {
+                  field: { onChange: (value: string) => void; value: string };
+                }) => (
                   <FormItem>
                     <FormLabel>Plano</FormLabel>
                     <Select
@@ -277,14 +317,25 @@ function AdminPage() {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => setDeleteId(p.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={`Enviar redefinição de senha para ${p.email}`}
+                      onClick={() => resendReset(p.email)}
+                    >
+                      <Mail className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-600 hover:text-red-700"
+                      title="Excluir profissional"
+                      onClick={() => setDeleteId(p.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

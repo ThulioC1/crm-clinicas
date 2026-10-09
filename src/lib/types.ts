@@ -12,6 +12,7 @@ export interface UserProfile {
   status: AccountStatus;
   plan: Plan;
   createdAt: string;
+  mustChangePassword?: boolean;
   googleRefreshToken?: string;
   googleCalendarId?: string;
 }

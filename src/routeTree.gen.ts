@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin.tsx'
 import { Route as DashboardRouteImport } from './routes/dashboard.tsx'
 import { Route as LoginRouteImport } from './routes/login.tsx'
+import { Route as TrocarSenhaRouteImport } from './routes/trocar-senha.tsx'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index.tsx'
 import { Route as DashboardAgendaRouteImport } from './routes/dashboard.agenda.tsx'
 import { Route as DashboardClientesRouteImport } from './routes/dashboard.clientes.tsx'
@@ -36,6 +37,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrocarSenhaRoute = TrocarSenhaRouteImport.update({
+  id: '/trocar-senha',
+  path: '/trocar-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
+  '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
   '/dashboard/clientes': typeof DashboardClientesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
+  '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
   '/dashboard/clientes': typeof DashboardClientesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
+  '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
   '/dashboard/clientes': typeof DashboardClientesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
   | '/admin'
   | '/dashboard'
   | '/login'
+  | '/trocar-senha'
   | '/dashboard/agenda'
   | '/dashboard/clientes'
   | '/dashboard/prontuarios'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   | '/'
   | '/admin'
   | '/login'
+  | '/trocar-senha'
   | '/dashboard/agenda'
   | '/dashboard/clientes'
   | '/dashboard/prontuarios'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
   | '/admin'
   | '/dashboard'
   | '/login'
+  | '/trocar-senha'
   | '/dashboard/agenda'
   | '/dashboard/clientes'
   | '/dashboard/prontuarios'
@@ -126,6 +138,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   LoginRoute: typeof LoginRoute
+  TrocarSenhaRoute: typeof TrocarSenhaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trocar-senha': {
+      id: '/trocar-senha'
+      path: '/trocar-senha'
+      fullPath: '/trocar-senha'
+      preLoaderRoute: typeof TrocarSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -212,6 +232,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
+  TrocarSenhaRoute: TrocarSenhaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { LogOut, Stethoscope, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { isFirebaseConfigured } from "@/lib/firebase";
@@ -15,6 +15,12 @@ export interface NavItem {
 export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Senha provisória ainda não trocada: bloqueia o app até a troca
+  useEffect(() => {
+    if (user?.mustChangePassword) navigate({ to: "/trocar-senha", replace: true });
+  }, [user?.mustChangePassword, navigate]);
+
   return (
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
