@@ -6,6 +6,13 @@ export const patientSchema = z.object({
   phone: z.string().trim().min(8, "Telefone inválido").max(20),
   birthDate: z.string().min(1, "Informe a data de nascimento"),
   notes: z.string().trim().max(1000).optional().default(""),
+  gender: z.enum(["female", "male"]).optional(),
+  heightCm: z.coerce.number().min(50, "Altura inválida").max(260).optional(),
+  weightKg: z.coerce.number().min(2, "Peso inválido").max(400).optional(),
+  waistCm: z.coerce.number().min(20, "Valor inválido").max(250).optional(),
+  hipCm: z.coerce.number().min(20, "Valor inválido").max(250).optional(),
+  activityLevel: z.enum(["sedentary", "light", "moderate", "active", "athlete"]).optional(),
+  goal: z.enum(["lose", "maintain", "gain"]).optional(),
 });
 export type PatientInput = z.infer<typeof patientSchema>;
 

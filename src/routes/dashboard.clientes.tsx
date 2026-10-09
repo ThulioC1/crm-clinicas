@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -20,7 +28,10 @@ import {
 import { usePatients, useRecords, useAppointments, useTenantId } from "@/hooks/use-tenant";
 import { patientsRepo } from "@/services/db";
 import { patientSchema } from "@/lib/schemas";
-import type { Patient } from "@/lib/types";
+import { useAuth } from "@/lib/auth";
+import { resolveSpecialty } from "@/lib/specialties";
+import { ACTIVITY_FACTORS } from "@/lib/calculations/nutrition";
+import type { ActivityLevel, Gender, Patient, WeightGoal } from "@/lib/types";
 
 export const Route = createFileRoute("/dashboard/clientes")({
   head: () => ({
@@ -35,10 +46,26 @@ export const Route = createFileRoute("/dashboard/clientes")({
 });
 
 const PAGE = 6;
-const empty = { name: "", email: "", phone: "", birthDate: "", notes: "" };
+const empty = {
+  name: "",
+  email: "",
+  phone: "",
+  birthDate: "",
+  notes: "",
+  gender: "" as "" | Gender,
+  heightCm: "",
+  weightKg: "",
+  waistCm: "",
+  hipCm: "",
+  activityLevel: "" as "" | ActivityLevel,
+  goal: "" as "" | WeightGoal,
+};
 
 function Clients() {
   const tenantId = useTenantId();
+  const { user } = useAuth();
+  const specialty = resolveSpecialty(user?.specialty);
+  const usaComposicao = specialty.modules.includes("avaliacao_nutricional");
   const { data } = usePatients();
   const { data: records } = useRecords();
   const { data: appts } = useAppointments();
@@ -174,6 +201,106 @@ function Clients() {
               <Label>Observações</Label>
               <Textarea value={form.notes} onChange={set("notes")} />
             </div>
+
+            {usaComposicao && (
+              <>
+                <Separator className="my-2" />
+                <p className="text-sm font-semibold text-muted-foreground">
+                  Dados de composição corporal
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Sexo biológico</Label>
+                    <Select
+                      value={form.gender ?? ""}
+                      onValueChange={(v) => setForm({ ...form, gender: v as Gender })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="female">Feminino</SelectItem>
+                        <SelectItem value="male">Masculino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Altura (cm)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={form.heightCm}
+                      onChange={set("heightCm")}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Peso (kg)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={form.weightKg}
+                      onChange={set("weightKg")}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Cintura (cm)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={form.waistCm}
+                      onChange={set("waistCm")}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Quadril (cm)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={form.hipCm}
+                      onChange={set("hipCm")}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Atividade física</Label>
+                    <Select
+                      value={form.activityLevel ?? ""}
+                      onValueChange={(v) => setForm({ ...form, activityLevel: v as ActivityLevel })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(ACTIVITY_FACTORS).map(([value, info]) => (
+                          <SelectItem key={value} value={value}>
+                            {info.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label>Objetivo</Label>
+                  <Select
+                    value={form.goal ?? ""}
+                    onValueChange={(v) => setForm({ ...form, goal: v as WeightGoal })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lose">Emagrecer</SelectItem>
+                      <SelectItem value="maintain">Manter</SelectItem>
+                      <SelectItem value="gain">Ganhar massa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
             <Button className="w-full">Salvar</Button>
           </form>
         </DialogContent>

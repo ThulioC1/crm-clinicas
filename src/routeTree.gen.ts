@@ -8,16 +8,19 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root.tsx'
+import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin.tsx'
-import { Route as DashboardRouteImport } from './routes/dashboard.tsx'
-import { Route as LoginRouteImport } from './routes/login.tsx'
-import { Route as TrocarSenhaRouteImport } from './routes/trocar-senha.tsx'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard.index.tsx'
-import { Route as DashboardAgendaRouteImport } from './routes/dashboard.agenda.tsx'
-import { Route as DashboardClientesRouteImport } from './routes/dashboard.clientes.tsx'
-import { Route as DashboardProntuariosRouteImport } from './routes/dashboard.prontuarios.tsx'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as TrocarSenhaRouteImport } from './routes/trocar-senha'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardAgendaRouteImport } from './routes/dashboard.agenda'
+import { Route as DashboardAvaliacaoRouteImport } from './routes/dashboard.avaliacao'
+import { Route as DashboardClientesRouteImport } from './routes/dashboard.clientes'
+import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
+import { Route as DashboardProntuariosRouteImport } from './routes/dashboard.prontuarios'
+import { Route as AuthGoogleCallbackRouteImport } from './routes/auth.google.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -54,15 +57,30 @@ const DashboardAgendaRoute = DashboardAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAvaliacaoRoute = DashboardAvaliacaoRouteImport.update({
+  id: '/avaliacao',
+  path: '/avaliacao',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardClientesRoute = DashboardClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardProntuariosRoute = DashboardProntuariosRouteImport.update({
   id: '/prontuarios',
   path: '/prontuarios',
   getParentRoute: () => DashboardRoute,
+} as any)
+const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
+  id: '/auth/google/callback',
+  path: '/auth/google/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -72,9 +90,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
+  '/dashboard/avaliacao': typeof DashboardAvaliacaoRoute
   '/dashboard/clientes': typeof DashboardClientesRoute
+  '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,9 +103,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
+  '/dashboard/avaliacao': typeof DashboardAvaliacaoRoute
   '/dashboard/clientes': typeof DashboardClientesRoute
+  '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,43 +118,55 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/trocar-senha': typeof TrocarSenhaRoute
   '/dashboard/agenda': typeof DashboardAgendaRoute
+  '/dashboard/avaliacao': typeof DashboardAvaliacaoRoute
   '/dashboard/clientes': typeof DashboardClientesRoute
+  '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/prontuarios': typeof DashboardProntuariosRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-  | '/'
-  | '/admin'
-  | '/dashboard'
-  | '/login'
-  | '/trocar-senha'
-  | '/dashboard/agenda'
-  | '/dashboard/clientes'
-  | '/dashboard/prontuarios'
-  | '/dashboard/'
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/login'
+    | '/trocar-senha'
+    | '/dashboard/agenda'
+    | '/dashboard/avaliacao'
+    | '/dashboard/clientes'
+    | '/dashboard/configuracoes'
+    | '/dashboard/prontuarios'
+    | '/dashboard/'
+    | '/auth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
-  | '/'
-  | '/admin'
-  | '/login'
-  | '/trocar-senha'
-  | '/dashboard/agenda'
-  | '/dashboard/clientes'
-  | '/dashboard/prontuarios'
-  | '/dashboard'
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/trocar-senha'
+    | '/dashboard/agenda'
+    | '/dashboard/avaliacao'
+    | '/dashboard/clientes'
+    | '/dashboard/configuracoes'
+    | '/dashboard/prontuarios'
+    | '/dashboard'
+    | '/auth/google/callback'
   id:
-  | '__root__'
-  | '/'
-  | '/admin'
-  | '/dashboard'
-  | '/login'
-  | '/trocar-senha'
-  | '/dashboard/agenda'
-  | '/dashboard/clientes'
-  | '/dashboard/prontuarios'
-  | '/dashboard/'
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/login'
+    | '/trocar-senha'
+    | '/dashboard/agenda'
+    | '/dashboard/avaliacao'
+    | '/dashboard/clientes'
+    | '/dashboard/configuracoes'
+    | '/dashboard/prontuarios'
+    | '/dashboard/'
+    | '/auth/google/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -139,6 +175,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   LoginRoute: typeof LoginRoute
   TrocarSenhaRoute: typeof TrocarSenhaRoute
+  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,11 +229,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgendaRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/avaliacao': {
+      id: '/dashboard/avaliacao'
+      path: '/avaliacao'
+      fullPath: '/dashboard/avaliacao'
+      preLoaderRoute: typeof DashboardAvaliacaoRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/clientes': {
       id: '/dashboard/clientes'
       path: '/clientes'
       fullPath: '/dashboard/clientes'
       preLoaderRoute: typeof DashboardClientesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/configuracoes': {
+      id: '/dashboard/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/dashboard/configuracoes'
+      preLoaderRoute: typeof DashboardConfiguracoesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/prontuarios': {
@@ -206,19 +257,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProntuariosRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/auth/google/callback': {
+      id: '/auth/google/callback'
+      path: '/auth/google/callback'
+      fullPath: '/auth/google/callback'
+      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface DashboardRouteChildren {
   DashboardAgendaRoute: typeof DashboardAgendaRoute
+  DashboardAvaliacaoRoute: typeof DashboardAvaliacaoRoute
   DashboardClientesRoute: typeof DashboardClientesRoute
+  DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardProntuariosRoute: typeof DashboardProntuariosRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAgendaRoute: DashboardAgendaRoute,
+  DashboardAvaliacaoRoute: DashboardAvaliacaoRoute,
   DashboardClientesRoute: DashboardClientesRoute,
+  DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardProntuariosRoute: DashboardProntuariosRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
@@ -233,6 +295,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
   TrocarSenhaRoute: TrocarSenhaRoute,
+  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

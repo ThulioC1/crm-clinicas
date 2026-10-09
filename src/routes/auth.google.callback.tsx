@@ -65,10 +65,12 @@ function GoogleCallback() {
         });
 
         const tokens = await tokenRes.json();
-        if (!tokenRes.ok) throw new Error(tokens.error_description || "Falha ao trocar código por token");
+        if (!tokenRes.ok)
+          throw new Error(tokens.error_description || "Falha ao trocar código por token");
 
         const { refresh_token, access_token } = tokens;
-        if (!refresh_token) throw new Error("Google não retornou refresh_token. Revogue o acesso e tente novamente.");
+        if (!refresh_token)
+          throw new Error("Google não retornou refresh_token. Revogue o acesso e tente novamente.");
 
         const calRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary", {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -124,7 +126,10 @@ function GoogleCallback() {
               <h3 className="text-lg font-semibold">Erro na conexão</h3>
               <p className="text-muted-foreground">{message}</p>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate({ to: "/dashboard/configuracoes" })}>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate({ to: "/dashboard/configuracoes" })}
+                >
                   Tentar novamente
                 </Button>
                 <Button onClick={() => window.close()}>Fechar</Button>

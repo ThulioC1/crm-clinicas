@@ -102,3 +102,198 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* ==========================================================================
+   Documentos clínicos imprimíveis
+   Em tela o documento aparece como uma prévia dentro do app; na impressão o
+   shell some e resta apenas o papel com a marca do profissional.
+   ========================================================================== */
+
+.doc {
+  max-width: 46rem;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  padding: 2rem;
+  color: var(--card-foreground);
+  font-size: 0.875rem;
+}
+
+.doc-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 1rem;
+}
+
+.doc-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.doc-brand-mark {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.doc-brand-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.doc-brand-meta {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.doc-title-block {
+  text-align: right;
+}
+
+.doc-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.doc-subtitle {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.doc-section {
+  margin-top: 1.25rem;
+  break-inside: avoid;
+}
+
+.doc-heading {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.doc-line {
+  font-size: 0.8125rem;
+}
+
+.doc-line-label {
+  color: var(--muted-foreground);
+}
+
+.doc-note {
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.doc-table th,
+.doc-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.375rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc-table th {
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.doc-strong {
+  font-weight: 700;
+}
+
+.doc-meals {
+  margin-top: 0.75rem;
+}
+
+.doc-footer {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.doc-contact,
+.doc-date {
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.doc-signature {
+  margin-top: 2.5rem;
+  width: 16rem;
+  text-align: center;
+}
+
+.doc-signature-line {
+  border-top: 1px solid var(--foreground);
+}
+
+.doc-signature-name {
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+}
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  /* Fora do impressão some tudo, menos o documento */
+  body * {
+    visibility: hidden;
+  }
+
+  .doc,
+  .doc * {
+    visibility: visible;
+  }
+
+  .doc {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

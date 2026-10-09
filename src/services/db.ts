@@ -100,10 +100,7 @@ export const usersRepo = {
     }
     return users;
   },
-  async create(
-    caller: UserProfile,
-    data: Omit<UserProfile, "id" | "createdAt">,
-  ): Promise<string> {
+  async create(caller: UserProfile, data: Omit<UserProfile, "id" | "createdAt">): Promise<string> {
     if (caller.role !== "super_admin") throw new Error("Acesso negado");
     const payload = { ...data, createdAt: new Date().toISOString() };
     let newId: string;
