@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import {
-  onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider, isFirebaseConfigured } from "./firebase";
@@ -24,7 +27,12 @@ async function loadProfile(uid: string, email: string, name: string): Promise<Us
   if (snap.exists()) return { id: uid, ...snap.data() } as UserProfile;
   // Primeiro login: cria perfil como profissional (permitido pelas Security Rules)
   const profile: Omit<UserProfile, "id"> = {
-    name, email, role: "professional", tenantId: uid, status: "active", plan: "free",
+    name,
+    email,
+    role: "professional",
+    tenantId: uid,
+    status: "active",
+    plan: "pro",
     createdAt: new Date().toISOString(),
   };
   await setDoc(ref, profile);
@@ -38,12 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isFirebaseConfigured && auth) {
       return onAuthStateChanged(auth, async (fbUser) => {
-        setUser(fbUser ? await loadProfile(fbUser.uid, fbUser.email ?? "", fbUser.displayName ?? "") : null);
+        setUser(
+          fbUser
+            ? await loadProfile(fbUser.uid, fbUser.email ?? "", fbUser.displayName ?? "")
+            : null,
+        );
         setLoading(false);
       });
     }
     const uid = sessionStorage.getItem(DEMO_KEY);
-    setUser(uid ? usersRepo.getMock(uid) ?? null : null);
+    setUser(uid ? (usersRepo.getMock(uid) ?? null) : null);
     setLoading(false);
     return undefined;
   }, []);
@@ -73,7 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async loginGoogle() {
       if (isFirebaseConfigured && auth) {
         const cred = await signInWithPopup(auth, googleProvider);
-        const p = guard(await loadProfile(cred.user.uid, cred.user.email ?? "", cred.user.displayName ?? ""));
+        const p = guard(
+          await loadProfile(cred.user.uid, cred.user.email ?? "", cred.user.displayName ?? ""),
+        );
         setUser(p);
         return p;
       }
