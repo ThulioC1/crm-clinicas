@@ -7,6 +7,8 @@ import { RequireRole } from "@/components/RequireRole";
 import { useAuth } from "@/lib/auth";
 import { usersRepo } from "@/services/db";
 import { useLive } from "@/hooks/use-tenant-data";
+import { sendPasswordResetEmail, getAuth } from "firebase/auth";
+import { app } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -96,7 +98,12 @@ function AdminPage() {
         status: "active",
         plan: values.plan,
       });
-      toast.success("Profissional cadastrado com sucesso");
+      
+      // Envia e-mail para o profissional definir a senha (cria conta no Auth)
+      const auth = getAuth(app!);
+      await sendPasswordResetEmail(auth, values.email);
+      
+      toast.success("Profissional cadastrado! E-mail de convite enviado.");
       setOpenCreate(false);
       form.reset({ plan: "pro" });
     } catch (e) {
