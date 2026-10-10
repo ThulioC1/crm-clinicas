@@ -21,6 +21,10 @@ export interface UserProfile {
   mustChangePassword?: boolean;
   googleRefreshToken?: string;
   googleCalendarId?: string;
+  documentLogo?: string;
+  documentSignature?: string;
+  registerLabelOverride?: string;
+  registerNumber?: string;
 }
 
 interface TenantDoc {

@@ -70,9 +70,19 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
     () => ({
       professionalName: user?.name ?? "",
       professionalSpecialty: specialty.label,
-      registerLabel: specialty.registerLabel,
+      registerLabel: user?.registerLabelOverride || specialty.registerLabel,
+      registerNumber: user?.registerNumber,
+      documentLogo: user?.documentLogo,
+      documentSignature: user?.documentSignature,
     }),
-    [user?.name, specialty],
+    [
+      user?.name,
+      user?.registerLabelOverride,
+      user?.registerNumber,
+      user?.documentLogo,
+      user?.documentSignature,
+      specialty
+    ],
   );
 
   const nutritional = useMemo(() => {

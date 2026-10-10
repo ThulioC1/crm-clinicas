@@ -19,6 +19,8 @@ export interface DocumentBrand {
   email?: string | undefined;
   phone?: string | undefined;
   address?: string | undefined;
+  documentLogo?: string | undefined;
+  documentSignature?: string | undefined;
 }
 
 export function DocumentHeader({
@@ -33,9 +35,13 @@ export function DocumentHeader({
   return (
     <header className="doc-header">
       <div className="doc-brand">
-        <div className="doc-brand-mark" aria-hidden>
-          ✚
-        </div>
+        {brand.documentLogo ? (
+          <img src={brand.documentLogo} alt="Logo" className="h-10 w-auto object-contain" />
+        ) : (
+          <div className="doc-brand-mark" aria-hidden>
+            ✚
+          </div>
+        )}
         <div>
           <p className="doc-brand-name">{brand.professionalName}</p>
           <p className="doc-brand-meta">
@@ -60,9 +66,14 @@ export function DocumentFooter({ brand, date }: { brand: DocumentBrand; date: Da
     <footer className="doc-footer">
       {contact && <p className="doc-contact">{contact}</p>}
       <div className="doc-signature">
+        {brand.documentSignature && (
+          <div className="flex justify-center mb-2">
+            <img src={brand.documentSignature} alt="Assinatura" className="h-12 w-auto object-contain" />
+          </div>
+        )}
         <div className="doc-signature-line" />
         <p className="doc-signature-name">
-          {brand.professionalName} — {brand.registerLabel}
+          {brand.professionalName} — {brand.registerLabel} {brand.registerNumber}
         </p>
       </div>
       <p className="doc-date">

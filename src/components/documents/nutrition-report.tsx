@@ -58,14 +58,7 @@ export function PrintableNutritionReport(props: NutritionReportProps) {
   return (
     <article className="doc">
       <DocumentHeader
-        brand={{
-          professionalName,
-          professionalSpecialty,
-          registerLabel,
-          email: props.email,
-          phone: props.phone,
-          address: props.address,
-        }}
+        brand={props}
         title="Relatório de Avaliação Nutricional"
         subtitle={now.toLocaleDateString("pt-BR")}
       />
@@ -199,14 +192,7 @@ export function PrintableNutritionReport(props: NutritionReportProps) {
       </section>
 
       <DocumentFooter
-        brand={{
-          professionalName,
-          professionalSpecialty,
-          registerLabel,
-          email: props.email,
-          phone: props.phone,
-          address: props.address,
-        }}
+        brand={props}
         date={now}
       />
     </article>

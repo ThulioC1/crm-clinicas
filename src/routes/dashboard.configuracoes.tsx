@@ -14,6 +14,7 @@ import {
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth";
@@ -102,6 +103,26 @@ function Configuracoes() {
     }
   };
 
+  const handleUpdateProfile = async (updates: Partial<typeof me>) => {
+    try {
+      await usersRepo.update(me, me.id, updates);
+      toast.success("Configuração atualizada");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const handleFileChange = (field: "documentLogo" | "documentSignature") => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      handleUpdateProfile({ [field]: result });
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <>
       <PageHeader title="Configurações" subtitle="Integrações e preferências da sua conta" />
@@ -143,6 +164,73 @@ function Configuracoes() {
                   {MODULE_LABELS[m]}
                 </Badge>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>Personalização de Documentos</CardTitle>
+                <CardDescription>Logo, assinatura e registro profissional para impressões</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Registro (Ex: CRM-SP, CRN, CRP)</Label>
+                <Input 
+                  placeholder={resolveSpecialty(me.specialty).registerLabel} 
+                  defaultValue={me.registerLabelOverride || ""}
+                  onBlur={(e) => {
+                    if (e.target.value !== me.registerLabelOverride) {
+                      handleUpdateProfile({ registerLabelOverride: e.target.value });
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Número do Registro</Label>
+                <Input 
+                  placeholder="123456" 
+                  defaultValue={me.registerNumber || ""}
+                  onBlur={(e) => {
+                    if (e.target.value !== me.registerNumber) {
+                      handleUpdateProfile({ registerNumber: e.target.value });
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Logotipo da Clínica / Profissional</Label>
+                {me.documentLogo && (
+                  <div className="mb-2">
+                    <img src={me.documentLogo} alt="Logo" className="max-h-16 object-contain" />
+                    <Button variant="link" size="sm" className="px-0 text-red-500 h-auto" onClick={() => handleUpdateProfile({ documentLogo: "" })}>Remover logo</Button>
+                  </div>
+                )}
+                <Input type="file" accept="image/*" onChange={handleFileChange("documentLogo")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Assinatura Digitalizada</Label>
+                {me.documentSignature && (
+                  <div className="mb-2">
+                    <img src={me.documentSignature} alt="Assinatura" className="max-h-16 object-contain" />
+                    <Button variant="link" size="sm" className="px-0 text-red-500 h-auto" onClick={() => handleUpdateProfile({ documentSignature: "" })}>Remover assinatura</Button>
+                  </div>
+                )}
+                <Input type="file" accept="image/*" onChange={handleFileChange("documentSignature")} />
+              </div>
             </div>
           </CardContent>
         </Card>
