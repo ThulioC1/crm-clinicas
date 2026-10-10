@@ -38,8 +38,16 @@ const DEMO_KEY = "demo-session-uid";
  * para o próprio usuário, então usamos o endpoint signUp diretamente — assim a
  * sessão do admin que está criando o registro não é alterada.
  * A senha é aleatória: o profissional redefine a própria senha pelo e-mail.
+ *
+ * Se o e-mail já tem conta (EMAIL_EXISTS), isso NÃO é erro: é a cadeia de
+ * unicidade de e-mail do Firebase Auth funcionando. A conta existente é
+ * reutilizada — assim uma pessoa pode ser profissional E paciente sem duplicar
+ * cadastro. `uid` só é conhecido quando a conta é criada agora; em reuso, fica
+ * null e o vínculo com o perfil acontece no primeiro login (loadProfile).
  */
-export async function createAuthAccount(email: string): Promise<void> {
+export async function createAuthAccount(
+  email: string,
+): Promise<{ created: boolean; uid: string | null }> {
   const apiKey = import.meta.env["VITE_FIREBASE_API_KEY"] as string | undefined;
   if (!apiKey) throw new Error("Firebase não configurado.");
 
@@ -53,10 +61,13 @@ export async function createAuthAccount(email: string): Promise<void> {
     },
   );
 
-  if (res.ok) return;
+  if (res.ok) {
+    const body = (await res.json().catch(() => null)) as { localId?: string } | null;
+    return { created: true, uid: body?.localId ?? null };
+  }
   const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
   const message = err?.error?.message ?? "";
-  if (message.includes("EMAIL_EXISTS")) throw new Error("Já existe uma conta com este e-mail.");
+  if (message.includes("EMAIL_EXISTS")) return { created: false, uid: null };
   if (message.includes("OPERATION_NOT_ALLOWED")) {
     throw new Error("Ative o login por e-mail/senha no Firebase Console → Authentication.");
   }
@@ -72,8 +83,15 @@ export async function createAuthAccount(email: string): Promise<void> {
  */
 async function clearPendingProfile(uid: string, email: string) {
   if (!db) return;
-  const snap = await getDocs(query(collection(db, "users"), where("email", "==", email)));
-  await Promise.all(snap.docs.filter((d) => d.id !== uid).map((d) => deleteDoc(d.ref)));
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("email", "==", email)));
+    await Promise.all(snap.docs.filter((d) => d.id !== uid).map((d) => deleteDoc(d.ref)));
+  } catch (e) {
+    // As Security Rules podem negar a leitura/escrita de perfis de outros usuários.
+    // Não é crítico: o perfil users/{uid} é criado de qualquer forma abaixo; um
+    // cadastro órfão pode ser removido depois pelo super admin no painel.
+    console.warn("[saudepro] Perfil pendente não pôde ser limpo automaticamente:", e);
+  }
 }
 
 async function loadProfile(uid: string, email: string, name: string): Promise<UserProfile> {

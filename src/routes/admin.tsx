@@ -41,6 +41,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { professionalSchema, type ProfessionalInput } from "@/lib/schemas";
 import { createAuthAccount } from "@/lib/auth";
+import { mesmoEmail } from "@/lib/utils";
 import type { Plan, UserProfile } from "@/lib/types";
 
 export const Route = createFileRoute("/admin")({
@@ -97,27 +98,54 @@ function AdminPage() {
 
   const onSubmit = async (values: ProfessionalInput) => {
     try {
-      // 1. Cria a conta no Firebase Auth (senha aleatória) para o e-mail de reset funcionar
-      await createAuthAccount(values.email);
+      const email = values.email.trim();
 
-      // 2. Cadastra o perfil no Firestore
-      await usersRepo.create(me, {
-        name: values.name,
-        email: values.email,
-        role: "professional",
-        tenantId: crypto.randomUUID(),
-        specialty: values.specialty,
-        status: "active",
-        plan: values.plan,
-        mustChangePassword: true,
-      });
+      // Unicidade de e-mail entre usuários: o mesmo e-mail não pode virar dois
+      // cadastros em users/. Isso NÃO bloqueia um paciente existente (outra
+      // coleção) virar profissional — papéis são independentes por design.
+      const existentes = await usersRepo.listAll(me);
+      const duplicado = existentes.find((u) => mesmoEmail(u.email, email));
+      if (duplicado) {
+        toast.error(
+          duplicado.status === "blocked"
+            ? "Já existe um usuário com este e-mail, com perfil bloqueado. Reative-o no painel em vez de criar outro cadastro."
+            : "Já existe um usuário cadastrado com este e-mail.",
+        );
+        return;
+      }
+
+      // 1. Cria a conta no Firebase Auth — ou reutiliza a existente (EMAIL_EXISTS
+      //    não é erro: o Firebase Auth é justamente a garantia de e-mail único).
+      const { created, uid } = await createAuthAccount(email);
+
+      // 2. Cadastra o perfil no Firestore. Com o uid conhecido, o documento é
+      //    users/{uid} (formato das Security Rules) e o tenantId segue a
+      //    convenção tenantId = uid usada no primeiro login.
+      await usersRepo.create(
+        me,
+        {
+          name: values.name,
+          email,
+          role: "professional",
+          tenantId: uid ?? crypto.randomUUID(),
+          specialty: values.specialty,
+          status: "active",
+          plan: values.plan,
+          mustChangePassword: true,
+        },
+        uid ?? undefined,
+      );
 
       // 3. Envia o e-mail para o profissional redefinir a senha
-      await sendPasswordResetEmail(getAuth(app!), values.email);
+      await sendPasswordResetEmail(getAuth(app!), email);
 
       setOpenCreate(false);
       form.reset({ plan: "pro" });
-      toast.success(`Profissional cadastrado! E-mail de redefinição enviado para ${values.email}`);
+      toast.success(
+        created
+          ? `Profissional cadastrado! E-mail de redefinição enviado para ${email}`
+          : `Profissional vinculado à conta existente de ${email}. E-mail de redefinição enviado.`,
+      );
     } catch (e) {
       toast.error((e as Error).message);
     }

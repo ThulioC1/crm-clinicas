@@ -27,6 +27,7 @@ import {
 import { usePatients, useTenantId } from "@/hooks/use-tenant";
 import { patientsRepo } from "@/services/db";
 import { patientSchema } from "@/lib/schemas";
+import { mesmoEmail } from "@/lib/utils";
 import { ACTIVITY_FACTORS } from "@/lib/calculations/nutrition";
 import type { ActivityLevel, Gender, Patient, WeightGoal } from "@/lib/types";
 
@@ -105,6 +106,14 @@ function Clients() {
     if (!r.success) {
       // Mostra todos os problemas, não só o primeiro
       toast.error(r.error.issues.map((i) => i.message).join(" · "));
+      return;
+    }
+    // Unicidade de e-mail por clínica: mesmo e-mail não pode ser dois clientes
+    // deste tenant. Não checa users/ (profissionais) — um profissional pode ser
+    // paciente da própria clínica, os papéis são coleções independentes.
+    const duplicado = data.some((p) => p.id !== editing?.id && mesmoEmail(p.email, r.data.email));
+    if (duplicado) {
+      toast.error("Este e-mail já está cadastrado para outro cliente desta clínica.");
       return;
     }
     try {

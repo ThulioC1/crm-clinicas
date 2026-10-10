@@ -203,16 +203,22 @@ export const usersRepo = {
     }
     return users;
   },
-  async create(caller: UserProfile, data: Omit<UserProfile, "id" | "createdAt">): Promise<string> {
+  async create(
+    caller: UserProfile,
+    data: Omit<UserProfile, "id" | "createdAt">,
+    id?: string,
+  ): Promise<string> {
     if (caller.role !== "super_admin") throw new Error("Acesso negado");
     const payload = semIndefinidos({ ...data, createdAt: new Date().toISOString() });
     let newId: string;
     if (isFirebaseConfigured && db) {
-      const ref = doc(collection(db, "users"));
+      // Com o uid do Firebase Auth conhecido, o documento vira users/{uid} —
+      // é o formato que as Security Rules esperam (leitura/escrita do próprio perfil).
+      const ref = id ? doc(db, "users", id) : doc(collection(db, "users"));
       newId = ref.id;
       await setDoc(ref, { ...payload, id: newId });
     } else {
-      newId = crypto.randomUUID();
+      newId = id ?? crypto.randomUUID();
       users = [{ ...payload, id: newId }, ...users];
     }
     userListeners.forEach((l) => l());
