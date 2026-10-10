@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { FilePlus2, Pill, Printer, Save, Trash2, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -95,20 +96,36 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
     };
   }, [patient]);
 
+  /** Container exclusivo da impressão, controlado pela folha de estilo. */
+  const PRINT_ROOT_ID = "saude-print-root";
+
   /**
-   * Marca o <html> enquanto há documento aberto.
+   * Prepara a impressão.
    *
-   * As regras de impressão escondem a aplicação só quando este atributo está
-   * presente — senão um Ctrl+P comum na ficha sairia em branco.
+   * O documento é impresso a partir de um container próprio no <body>, e não
+   * de dentro do diálogo: esconder a aplicação com `visibility` a deixava
+   * ocupando altura e o documento saía deslocado, com o título cortado.
+   * `visibility` não remove espaço do fluxo — `display: none` remove.
    */
   useEffect(() => {
     const html = document.documentElement;
+    let root = document.getElementById(PRINT_ROOT_ID);
+
     if (kind) {
+      if (!root) {
+        root = document.createElement("div");
+        root.id = PRINT_ROOT_ID;
+        document.body.appendChild(root);
+      }
       html.setAttribute("data-printing", "true");
     } else {
       html.removeAttribute("data-printing");
     }
-    return () => html.removeAttribute("data-printing");
+
+    return () => {
+      html.removeAttribute("data-printing");
+      document.getElementById(PRINT_ROOT_ID)?.remove();
+    };
   }, [kind]);
 
   /** Carrega o que já foi salvo para este paciente. */
@@ -145,6 +162,48 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
     setKind(null);
     setEditando(null);
   };
+
+  /**
+   * Versão somente leitura para o papel. Vai para o container de impressão,
+   * fora do fluxo do app, então pagina certinho e sem depender do `visibility`.
+   */
+  const documentoParaImpressao = () => {
+    if (!kind) return null;
+    if (kind === "prontuario") {
+      return (
+        <PrintableRecordReport
+          {...brand}
+          patientName={patient.name}
+          patientBirthDate={patient.birthDate}
+          records={records}
+        />
+      );
+    }
+    if (kind === "receita") {
+      return (
+        <PrintablePrescriptionReport
+          {...brand}
+          patientName={patient.name}
+          patientBirthDate={patient.birthDate}
+          items={itens.filter((i) => i.name.trim() !== "")}
+          notes={orientacoes}
+          returnDate={retorno || undefined}
+        />
+      );
+    }
+    return nutritional ? (
+      <PrintableNutritionReport
+        {...brand}
+        patient={patient}
+        formulaLabel={TMB_FORMULA_LABELS.mifflin}
+        result={nutritional}
+        meals={MEAL_SPLIT.map((m) => ({ label: m.label, text: refeicoes[m.label] ?? "" }))}
+        notes={orientacoes}
+      />
+    ) : null;
+  };
+
+  const printRoot = typeof document !== "undefined" ? document.getElementById(PRINT_ROOT_ID) : null;
 
   const salvar = async () => {
     if (!kind || kind === "prontuario") return;
@@ -380,6 +439,8 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
           )}
         </DialogContent>
       </Dialog>
+
+      {printRoot && createPortal(documentoParaImpressao(), printRoot)}
     </>
   );
 }

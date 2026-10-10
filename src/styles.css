@@ -269,52 +269,53 @@
     background: #fff !important;
   }
 
-  /* A ocultacao so vale quando ha um documento aberto: o atributo
-     data-printing e colocado no <html> pelo dialogo do documento. Sem ele,
-     imprimir a ficha do paciente sairia uma pagina em branco. */
-  html[data-printing] body * {
-    visibility: hidden;
-  }
+  /* ------------------------------------------------------------------
+     Impressao de documentos clinicos.
 
-  html[data-printing] .doc,
-  html[data-printing] .doc * {
-    visibility: visible;
-  }
+     O documento vive em #saude-print-root, um container proprio no <body>.
+     A aplicacao inteira sai do fluxo com display: none — visibility: hidden
+     esconderia, mas deixaria a altura do app empurrando o documento para
+     varias paginas abaixo, cortando o cabecalho.
+     ------------------------------------------------------------------ */
 
-  /* O .doc mora dentro de um Dialog (portal no body). Na impressao o dialogo
-     perde posicao, transformacao, altura e rolagem, para o documento sair
-     paginado de verdade. */
-  html[data-printing] [role="dialog"] {
-    position: static !important;
-    inset: auto !important;
-    transform: none !important;
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    border: 0 !important;
-    padding: 0 !important;
+  html[data-printing] body {
     background: #fff !important;
-    box-shadow: none !important;
   }
 
-  html[data-printing] [data-slot="dialog-overlay"],
-  html[data-printing] [data-slot="dialog-close"] {
+  html[data-printing] body > *:not(#saude-print-root) {
     display: none !important;
   }
 
-  .doc {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-    padding: 0;
+  #saude-print-root {
+    display: none;
+  }
+
+  html[data-printing] #saude-print-root {
+    display: block !important;
+    position: static !important;
+    width: auto;
+    height: auto;
+    overflow: visible;
     background: #fff;
     color: #000;
-    font-size: 11pt;
+  }
+
+  /* Todo texto do impresso sai em preto: as cores de tela (muta) viram
+     cinza-claro demais no papel, e rotulos das tabelas sumiam. */
+  html[data-printing] #saude-print-root,
+  html[data-printing] #saude-print-root * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html[data-printing] .doc-table th,
+  html[data-printing] .doc-table td,
+  html[data-printing] .doc-heading {
+    border-color: #999 !important;
   }
 
   .no-print {

@@ -4,46 +4,41 @@ import { describe, expect, it } from "vitest";
 const css = readFileSync("src/styles.css", "utf8");
 
 /** O arquivo tem mais de um bloco @media print — junta todos. */
-const blocoImpressao = css
+const impressao = css
   .split("@media print")
   .slice(1)
   .map((b) => `@media print${b.slice(0, b.indexOf("\n}") + 2)}`)
   .join("\n");
 
 describe("CSS de impressão", () => {
-  it("não esconde a aplicação quando não há documento aberto", () => {
-    // Regressão: `body * { visibility: hidden }` incondicional fazia o Ctrl+P
-    // comum na ficha do paciente sair em branco.
-    const semAtributo = blocoImpressao.match(/^\s*body\s+\*\s*\{[^}]*visibility:\s*hidden/m);
-    expect(semAtributo).toBeNull();
-  });
-
-  it("oculta a aplicação apenas com data-printing presente", () => {
-    expect(blocoImpressao).toMatch(
-      /html\[data-printing\]\s+body\s+\*\s*\{[^}]*visibility:\s*hidden/,
-    );
-    expect(blocoImpressao).toMatch(/html\[data-printing\]\s+\.doc/);
-  });
-
-  it("libera o documento e o diálogo para paginação real", () => {
-    expect(blocoImpressao).toMatch(
-      /html\[data-printing\]\s+\[role="dialog"\][^}]*overflow:\s*visible/,
-    );
-    expect(blocoImpressao).toMatch(
-      /html\[data-printing\]\s+\[role="dialog"\][^}]*position:\s*static/,
+  it("imprime a partir de um container próprio, #saude-print-root", () => {
+    expect(impressao).toMatch(
+      /html\[data-printing\]\s+#saude-print-root\s*\{[^}]*display:\s*block/,
     );
   });
 
-  it("esconde overlay e botão de fechar na impressão", () => {
-    expect(blocoImpressao).toMatch(/data-slot="dialog-overlay"/);
-    expect(blocoImpressao).toMatch(/data-slot="dialog-close"/);
+  it("remove a aplicação do fluxo com display:none, não visibility", () => {
+    // Regressão: `visibility: hidden` mantinha a altura do app e empurrava o
+    // documento para páginas abaixo, cortando o cabeçalho.
+    expect(impressao).toMatch(
+      /html\[data-printing\]\s+body\s*>\s*\*:not\(#saude-print-root\)\s*\{\s*display:\s*none/,
+    );
+    expect(impressao).not.toMatch(/body\s*\*\s*\{\s*visibility:\s*hidden/);
   });
 
-  it("esconde os controles de edição via .no-print", () => {
-    expect(blocoImpressao).toMatch(/\.no-print\s*\{[^}]*display:\s*none/);
+  it("esconde o container de impressão na tela", () => {
+    expect(impressao).toMatch(/#saude-print-root\s*\{\s*display:\s*none/);
   });
 
-  it("não usa position absolute no documento — evita página em branco extra", () => {
-    expect(blocoImpressao).not.toMatch(/\.doc\s*\{[^}]*position:\s*absolute/);
+  it("força texto preto — rótulos de tabela sumiam no papel", () => {
+    expect(impressao).toMatch(/#saude-print-root\s*\*\s*\{[^}]*color:\s*#000\s*!important/);
+  });
+
+  it("não usa position absolute no documento", () => {
+    expect(impressao).not.toMatch(/#saude-print-root\s*\{[^}]*position:\s*absolute/);
+  });
+
+  it("mantém .no-print fora do papel", () => {
+    expect(impressao).toMatch(/\.no-print\s*\{[^}]*display:\s*none/);
   });
 });
