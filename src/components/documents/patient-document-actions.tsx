@@ -98,6 +98,7 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
 
   /** Container exclusivo da impressão, controlado pela folha de estilo. */
   const PRINT_ROOT_ID = "saude-print-root";
+  const [printRoot, setPrintRoot] = useState<HTMLElement | null>(null);
 
   /**
    * Prepara a impressão.
@@ -117,9 +118,11 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
         root.id = PRINT_ROOT_ID;
         document.body.appendChild(root);
       }
+      setPrintRoot(root);
       html.setAttribute("data-printing", "true");
     } else {
       html.removeAttribute("data-printing");
+      setPrintRoot(null);
     }
 
     return () => {
@@ -203,7 +206,7 @@ export function PatientDocumentActions({ patient, records, permitePlano }: Props
     ) : null;
   };
 
-  const printRoot = typeof document !== "undefined" ? document.getElementById(PRINT_ROOT_ID) : null;
+
 
   const salvar = async () => {
     if (!kind || kind === "prontuario") return;
